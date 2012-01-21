@@ -18,8 +18,16 @@ How to Improve It
 -----------------
 
 1. [Fork!](https://github.com/wordnik/swagger-ui)
-1. Hack.
-1. Submit a pull request.
+
+2. Hack:
+
+```bash
+gem install middleman
+cd swagger-ui
+middleman build
+```
+
+3. Submit a pull request.
 
 Note: The HTML and CSS are converted from Haml and Sass, which means there are currently some development 
 dependencies. We are looking into revamping the source files and eliminating all development 
@@ -28,7 +36,7 @@ dependencies by using [less.js](http://lesscss.org/)
 License
 -------
 
-Copyright 2011 Wordnik, Inc.
+Copyright 2011-2012 Wordnik, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
