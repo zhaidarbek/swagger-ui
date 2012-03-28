@@ -2,7 +2,7 @@ jQuery(function($) {
 
   // this.baseUrl = "http://petstore.swagger.wordnik.com/api/resources.json";
   // this.apiKey = "special-key";
-  
+
   var ApiSelectionController = Spine.Controller.create({
     proxied: ["showApi"],
 
@@ -32,7 +32,7 @@ jQuery(function($) {
 
       this.handleEnter();
     },
-    
+
     handleEnter: function(){
       var self = this;
       var submit = function() {
@@ -47,18 +47,18 @@ jQuery(function($) {
         submit();
       });
     },
-    
+
     adaptToScale: function() {
       // var form_width = $('form#api_selector').width();
       // var inputs_width = 0;
       // $('form#api_selector div.input').each( function(){ inputs_width += $(this).outerWidth(); });
-      // 
+      //
       // // Update with of baseUrl input
       // var free_width = form_width - inputs_width;
       // $('#input_baseUrl').width($('#input_baseUrl').width() + free_width - 50);
     },
 
-    
+
     slapOn: function() {
       // messageController.showMessage("Please enter the base URL of the API that you wish to explore.");
       $("#content_message").show();
@@ -139,7 +139,7 @@ jQuery(function($) {
       });
 
       // $("#api_host_url").html(swaggerService.apiHost());
-      
+
       swaggerService.init();
 
       // Create convenience references to Spine models
@@ -227,14 +227,14 @@ jQuery(function($) {
     }
   });
 
-  
+
   // Param Model
   // ----------------------------------------------------------------------------------------------
   var Param = Spine.Model.setup(
     "Param",
     ["name", "defaultValue", 'description', 'required', 'dataType', 'allowableValues', 'paramType', 'allowMultiple', "readOnly"]
   );
-  
+
   Param.include({
 
     cleanup: function() {
@@ -243,20 +243,22 @@ jQuery(function($) {
 
     templateName: function(){
       var n = "#paramTemplate";
-      
+
       if (this.allowableValues && this.allowableValues.valueType == "LIST") {
         n += "Select";
+      } else if(this.paramType == 'body') {
+          n += "Json";
       } else {
         if (this.required) n += "Required";
         if (this.readOnly) n += "ReadOnly";
       }
-      
+
       return(n);
     }
 
   });
-  
-  
+
+
   var OperationController = Spine.Controller.create({
     proxied: ["submitOperation", "showResponse", "showErrorStatus", "showCompleteStatus"],
 
@@ -285,15 +287,15 @@ jQuery(function($) {
         for (var p = 0; p < this.operation.parameters.count(); p++) {
           var param = Param.init(this.operation.parameters.all()[p]);
           // Only GET operations display forms..
-          param.readOnly = !this.isGetOperation;
+          // param.readOnly = !this.isGetOperation;
           param.cleanup();
-          
+
           $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
         }
       }
 
       var submitButtonId = this.elementScope + "_content_sandbox_response_button";
-      if (this.isGetOperation) {
+      if (/*this.isGetOperation*/true) {
         $(submitButtonId).click(this.submitOperation);
       } else {
         $(submitButtonId).hide();
@@ -325,11 +327,24 @@ jQuery(function($) {
         }
 
       });
-      
+
       if (error_free) {
         var invocationUrl = this.operation.invocationUrl(form.serializeArray());
         $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
-        $.getJSON(invocationUrl, this.showResponse).complete(this.showCompleteStatus).error(this.showErrorStatus);
+        if(this.isGetOperation){
+            $.getJSON(invocationUrl, this.showResponse).complete(this.showCompleteStatus).error(this.showErrorStatus);
+        } else {
+            var path_json = this.operation.baseUrl + this.operation.path_json;
+            var json = form[0].elements[0].value;
+            console.log(json);
+            $.ajax({
+                type: this.operation.httpMethod,
+                contentType: "application/json; charset=utf-8",
+                url: path_json,
+                data: json,
+                dataType: "json"
+            });
+        }
       }
 
     },
@@ -367,7 +382,7 @@ jQuery(function($) {
 
   // Attach controller to window*
   window.apiSelectionController = ApiSelectionController.init();
-  
+
   if (this.baseUrl) {
     window.resourceListController = ResourceListController.init({
       baseUrl: this.baseUrl,

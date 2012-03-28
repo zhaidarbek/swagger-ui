@@ -72,6 +72,14 @@
     %td{:width => "500"} ${description}
 
 
+= jquery_template :paramTemplateJson do
+  %tr
+    %td.code ${name}
+    %td
+      %textarea{:name => "${name}", :value => ""}
+    %td{:width => "500"} ${description}
+
+
 = jquery_template :paramTemplateSelect do
   %tr
     %td.code ${name}
@@ -83,11 +91,11 @@
         {{each allowableValues.values}}
         {{if $value == defaultValue && required == true }}
         %option{:value => "${$value}", :selected => 'selected'} ${$value}
-        {{else}} 
+        {{else}}
         %option{:value => "${$value}"} ${$value}
         {{/if}}
         {{/each}}
-      
+
     %td{:width => "500"} ${description}
 
 = jquery_template :paramTemplateRequired do
@@ -109,3 +117,4 @@
     %td.code ${name}
     %td -
     %td{:width => "500"} ${description}
+
