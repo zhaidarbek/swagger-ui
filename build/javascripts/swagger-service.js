@@ -79,7 +79,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 		api.setBaseUrl(basePath);
 	  });
     },
-    
+
     addModel: function(modelObject) {
       this.modelList.create(modelObject);
     },
@@ -95,6 +95,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
     init: function(atts) {
       if (atts) this.load(atts);
 
+      if(this.path.indexOf("{format}") > 0){
       var secondPathSeperatorIndex = this.path.indexOf("/", 1);
       if (secondPathSeperatorIndex > 0) {
         var prefix = this.path.substr(0, secondPathSeperatorIndex);
@@ -118,6 +119,12 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
           this.name = this.path.substr(0, this.path.length - formatString.length - 1);
         }
       }
+      } else {
+        this.path_json = this.path;
+        this.path_xml = this.path;
+        this.name = this.path.substr(0, this.path.indexOf("/"));
+      }
+
 
       var value = this.operations;
 
@@ -169,6 +176,8 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 
       this.httpMethodLowercase = this.httpMethod.toLowerCase();
 
+      this._queryParams = {};
+
       var value = this.parameters;
       this.parameters = ApiParameter.sub();
       if (value) this.parameters.refresh(value);
@@ -203,21 +212,82 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       var url = $.tmpl(urlTemplate, formValuesMap)[0].data;
       // log("url with path params = " + url);
 
-      var queryParams = apiKeySuffix;
+      var queryParams = {};
+      if (apiKey) {
+        apiKey = jQuery.trim(apiKey);
+        if (apiKey.length > 0)
+        queryParams['api_key'] = apiKey;
+      }
+
       this.parameters.each(function(param) {
         var paramValue = jQuery.trim(formValuesMap[param.name]);
         if (param.paramType == "query" && paramValue.length > 0) {
-          queryParams += queryParams.length > 0 ? "&": "?";
-          queryParams += param.name;
-          queryParams += "=";
-          queryParams += formValuesMap[param.name];
+            queryParams[param.name] = formValuesMap[param.name];
+        } else if (param.paramType == "body" && paramValue.length > 0) {
+            // according to spec One and only one input object is supplied
+            queryParams = formValuesMap[param.name];
         }
       });
 
-      url = this.baseUrl + url + queryParams;
+      this._queryParams = queryParams;
+
+      url = this.baseUrl + url;
       // log("final url with query params and base url = " + url);
 
       return url;
+    },
+
+    invocationUrlSigned: function(formValues, key) {
+      if (!key) {
+        alert("Please specify signing key");
+        return null;
+      }
+
+      var formValuesMap = new Object();
+      for (var i = 0; i < formValues.length; i++) {
+        var formValue = formValues[i];
+        if (formValue.value && jQuery.trim(formValue.value).length > 0)
+        formValuesMap[formValue.name] = formValue.value;
+      }
+
+      var urlTemplateText = this.path_json.split("{").join("${");
+      log("url template = " + urlTemplateText);
+      var urlTemplate = $.template(null, urlTemplateText);
+      var pathPart = $.tmpl(urlTemplate, formValuesMap)[0].data;
+      log("url with path params = " + pathPart);
+
+      var queryPart = apiKeySuffix;
+      var queryParams = {};
+      if (apiKey) {
+        apiKey = jQuery.trim(apiKey);
+        if (apiKey.length > 0)
+        queryParams['api_key'] = apiKey;
+      }
+
+      this.parameters.each(function(param) {
+        var paramValue = jQuery.trim(formValuesMap[param.name]);
+        if (param.paramType == "query" && paramValue.length > 0) {
+            queryPart += queryPart.length > 0 ? "&": "?";
+            queryPart += param.name;
+            queryPart += "=";
+            queryPart += formValuesMap[param.name];
+            queryParams[param.name] = formValuesMap[param.name];
+        } else if (param.paramType == "body" && paramValue.length > 0) {
+            // according to spec One and only one input object is supplied
+            queryParams = formValuesMap[param.name];
+        }
+      });
+
+      this._queryParams = queryParams;
+
+      // sign URL
+      var pathAndQuery = pathPart + queryPart;
+      log("pathAndQuery = " + pathAndQuery);
+      var sha = new jsSHA(pathAndQuery, "ASCII");
+      var hash = sha.getHMAC(key, "ASCII", "B64");
+      var signature = encodeURIComponent(hash);
+
+      return this.baseUrl + pathAndQuery + (queryPart.length > 0 ? "&": "?") + "signature=" + signature;
     }
 
   });
@@ -278,7 +348,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       return "";
     }
   });
-  
+
 
   // Model: ApiModel
   var ApiModel = Spine.Model.setup("ApiModel", ["id", "fields"]);
@@ -380,16 +450,16 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 		baseDiscoveryUrl = baseDiscoveryUrl.substr(0, baseDiscoveryUrl.length - "/resources.json".length);
 	  else if(endsWith(baseDiscoveryUrl, "/resources"))
 		baseDiscoveryUrl = baseDiscoveryUrl.substr(0, baseDiscoveryUrl.length - "/resources".length);
-	
+
 	  this.discoveryUrlList.push(discoveryUrl);
 	  this.discoveryUrlList.push(baseDiscoveryUrl);
 	  this.discoveryUrlList.push(baseDiscoveryUrl + "/resources.json");
 	  this.discoveryUrlList.push(baseDiscoveryUrl + "/resources");
-	  
+
 	  log("Will try the following urls to discover api endpoints:")
 	  for(var i = 0; i < this.discoveryUrlList.length; i++)
 		log(" > " + this.discoveryUrlList[i]);
-	
+
 	  this.fetchEndpointsSeq();
     },
 
@@ -405,20 +475,20 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 	      .success(function(response) {
 		      log("Setting globalBasePath to " + response.basePath);
 		      globalBasePath = response.basePath;
-		      ApiResource.createAll(response.apis);  
+		      ApiResource.createAll(response.apis);
 	          controller.fetchResources(response.basePath);
 	      })
-	   	  .error(function(response) { 
+	   	  .error(function(response) {
 	          controller.fetchEndpointsSeq();
 		  });
 	  } else {
 	      log ('Error with resource discovery. Exhaused all possible endpoint urls');
-	
+
 		  var urlsTried = "";
 		  for(var i = 0; i < this.discoveryUrlList.length; i++) {
 			urlsTried = urlsTried + "<br/>" + this.discoveryUrlList[i];
 		  }
-			
+
 	      updateStatus("Unable to fetch API Listing. Tried the following urls:" + urlsTried);
 	  }
     },
@@ -448,7 +518,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
         this.countLoaded++;
         //    log(response);
         if (response.apis) {
-          apiResource.addApis(response.apis, response.basePath);  
+          apiResource.addApis(response.apis, response.basePath);
         }
         //        updateStatus("Parsed Apis");
         //log(response.models);

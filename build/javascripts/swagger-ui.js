@@ -260,7 +260,7 @@ jQuery(function($) {
 
 
   var OperationController = Spine.Controller.create({
-    proxied: ["submitOperation", "showResponse", "showErrorStatus", "showCompleteStatus"],
+    proxied: ["submitOperation", "submitOperationSigned", "showResponse", "showErrorStatus", "showCompleteStatus"],
 
     operation: null,
     templateName: "#operationTemplate",
@@ -286,24 +286,14 @@ jQuery(function($) {
 
         for (var p = 0; p < this.operation.parameters.count(); p++) {
           var param = Param.init(this.operation.parameters.all()[p]);
-          // Only GET operations display forms..
-          // param.readOnly = !this.isGetOperation;
           param.cleanup();
 
           $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
         }
       }
 
-      var submitButtonId = this.elementScope + "_content_sandbox_response_button";
-      if (/*this.isGetOperation*/true) {
-        $(submitButtonId).click(this.submitOperation);
-      } else {
-        $(submitButtonId).hide();
-
-        var valueHeader = this.elementScope + "_value_header";
-        $(valueHeader).html("Default Value");
-      }
-
+      $(this.elementScope + "_content_sandbox_response_button").click(this.submitOperation);
+      $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
     },
 
     submitOperation: function() {
@@ -329,21 +319,60 @@ jQuery(function($) {
       });
 
       if (error_free) {
-        var invocationUrl = this.operation.invocationUrl(form.serializeArray());
-        $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
-        if(this.isGetOperation){
-            $.getJSON(invocationUrl, this.showResponse).complete(this.showCompleteStatus).error(this.showErrorStatus);
-        } else {
-            var path_json = this.operation.baseUrl + this.operation.path_json;
-            var json = form[0].elements[0].value;
-            console.log(json);
+        var formData = form.serializeArray();
+        var invocationUrl = this.operation.invocationUrl(formData);
+        if(invocationUrl){
+            $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
             $.ajax({
                 type: this.operation.httpMethod,
                 contentType: "application/json; charset=utf-8",
-                url: path_json,
-                data: json,
-                dataType: "json"
-            });
+                url: invocationUrl,
+                data: this.operation._queryParams,
+                dataType: "json",
+                success: this.showResponse
+            }).complete(this.showCompleteStatus).error(this.showErrorStatus);
+        }
+      }
+
+    },
+
+    submitOperationSigned: function() {
+      var form = $(this.elementScope + "_form");
+      var error_free = true;
+      var missing_input = null;
+
+      // Cycle through the form's required inputs
+      form.find("input.required").each(function() {
+
+        // Remove any existing error styles from the input
+        $(this).removeClass('error');
+
+        // Tack the error style on if the input is empty..
+        if ($(this).val() == '') {
+          if (missing_input == null)
+          missing_input = $(this);
+          $(this).addClass('error');
+          $(this).wiggle();
+          error_free = false;
+        }
+
+      });
+
+      if (error_free) {
+        var formData = form.serializeArray();
+        var privateKey = $("#input_privateKey").val();
+        log(privateKey);
+        var invocationUrl = this.operation.invocationUrlSigned(formData, jQuery.trim(privateKey));
+        if(invocationUrl){
+            $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
+            $.ajax({
+                type: this.operation.httpMethod,
+                contentType: "application/json; charset=utf-8",
+                url: invocationUrl,
+                data: this.operation._queryParams,
+                dataType: "json",
+                success: this.showResponse
+            }).complete(this.showCompleteStatus).error(this.showErrorStatus);
         }
       }
 
@@ -372,7 +401,13 @@ jQuery(function($) {
     showStatus: function(data) {
       // log(data);
       // log(data.getAllResponseHeaders());
-      var response_body = "<pre>" + JSON.stringify(JSON.parse(data.responseText), null, 2).replace(/\n/g, "<br>") + "</pre>";
+      var responseText;
+      if(data.responseText){
+         responseText = JSON.parse(data.responseText);
+      } else {
+        responseText = "";
+      }
+      var response_body = "<pre>" + JSON.stringify(responseText, null, 2).replace(/\n/g, "<br>") + "</pre>";
       $(".response_code", this.elementScope + "_content_sandbox_response").html("<pre>" + data.status + "</pre>");
       $(".response_body", this.elementScope + "_content_sandbox_response").html(response_body);
       $(".response_headers", this.elementScope + "_content_sandbox_response").html("<pre>" + data.getAllResponseHeaders() + "</pre>");
