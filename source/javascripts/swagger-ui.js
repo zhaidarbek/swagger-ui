@@ -321,12 +321,14 @@ jQuery(function($) {
       if (error_free) {
         var formData = form.serializeArray();
         var invocationUrl = this.operation.invocationUrl(formData);
+        log(this.operation._headers);
         if(invocationUrl){
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
             $.ajax({
                 type: this.operation.httpMethod,
                 contentType: "application/json; charset=utf-8",
                 url: invocationUrl,
+                headers: this.operation._headers,
                 data: this.operation._queryParams,
                 dataType: "json",
                 success: this.showResponse
@@ -362,12 +364,14 @@ jQuery(function($) {
         var formData = form.serializeArray();
         var privateKey = $("#input_privateKey").val();
         var invocationUrl = this.operation.invocationUrlSigned(formData, jQuery.trim(privateKey));
+        log(this.operation._headers);
         if(invocationUrl){
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
             $.ajax({
                 type: this.operation.httpMethod,
                 contentType: "application/json; charset=utf-8",
                 url: invocationUrl,
+                headers: this.operation._headers,
                 data: this.operation._queryParams,
                 dataType: "json",
                 success: this.showResponse

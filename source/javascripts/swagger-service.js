@@ -178,6 +178,8 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 
       this._queryParams = {};
 
+      this._headers = {};
+
       var value = this.parameters;
       this.parameters = ApiParameter.sub();
       if (value) this.parameters.refresh(value);
@@ -211,7 +213,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       var urlTemplate = $.template(null, urlTemplateText);
       var url = $.tmpl(urlTemplate, formValuesMap)[0].data;
       // log("url with path params = " + url);
-
+      var headers = {};
       var queryParams = {};
       if (apiKey) {
         apiKey = jQuery.trim(apiKey);
@@ -226,10 +228,13 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
         } else if (param.paramType == "body" && paramValue.length > 0) {
             // according to spec One and only one input object is supplied
             queryParams = formValuesMap[param.name];
+        } else if (param.paramType == "header") {
+            headers[param.name] = formValuesMap[param.name];
         }
       });
 
       this._queryParams = queryParams;
+      this._headers = headers;
 
       url = this.baseUrl + url;
       // log("final url with query params and base url = " + url);
