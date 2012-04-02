@@ -361,7 +361,6 @@ jQuery(function($) {
       if (error_free) {
         var formData = form.serializeArray();
         var privateKey = $("#input_privateKey").val();
-        log(privateKey);
         var invocationUrl = this.operation.invocationUrlSigned(formData, jQuery.trim(privateKey));
         if(invocationUrl){
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");

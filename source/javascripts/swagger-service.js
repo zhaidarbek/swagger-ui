@@ -242,53 +242,37 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
         alert("Please specify signing key");
         return null;
       }
-
-      var formValuesMap = new Object();
-      for (var i = 0; i < formValues.length; i++) {
-        var formValue = formValues[i];
-        if (formValue.value && jQuery.trim(formValue.value).length > 0)
-        formValuesMap[formValue.name] = formValue.value;
-      }
-
-      var urlTemplateText = this.path_json.split("{").join("${");
-      log("url template = " + urlTemplateText);
-      var urlTemplate = $.template(null, urlTemplateText);
-      var pathPart = $.tmpl(urlTemplate, formValuesMap)[0].data;
-      log("url with path params = " + pathPart);
-
-      var queryPart = apiKeySuffix;
-      var queryParams = {};
-      if (apiKey) {
-        apiKey = jQuery.trim(apiKey);
-        if (apiKey.length > 0)
-        queryParams['api_key'] = apiKey;
-      }
-
-      this.parameters.each(function(param) {
-        var paramValue = jQuery.trim(formValuesMap[param.name]);
-        if (param.paramType == "query" && paramValue.length > 0) {
-            queryPart += queryPart.length > 0 ? "&": "?";
-            queryPart += param.name;
-            queryPart += "=";
-            queryPart += formValuesMap[param.name];
-            queryParams[param.name] = formValuesMap[param.name];
-        } else if (param.paramType == "body" && paramValue.length > 0) {
-            // according to spec One and only one input object is supplied
-            queryParams = formValuesMap[param.name];
-        }
-      });
-
-      this._queryParams = queryParams;
+      var url = this.invocationUrl(formValues);
 
       // sign URL
-      var pathAndQuery = pathPart + queryPart;
-      log("pathAndQuery = " + pathAndQuery);
-      var sha = new jsSHA(pathAndQuery, "ASCII");
+      var urlParts = this.splitUrl(url);
+      // log(urlParts.pathAndQuery);
+      var sha = new jsSHA(urlParts.pathAndQuery, "ASCII");
       var hash = sha.getHMAC(key, "ASCII", "B64");
       var signature = encodeURIComponent(hash);
+      // log(signature);
+      return url +
+            (urlParts.query == null || urlParts.query.length == 0 ? '?' : '&') +
+            "signature=" + signature;
+    },
 
-      return this.baseUrl + pathAndQuery + (queryPart.length > 0 ? "&": "?") + "signature=" + signature;
-    }
+    splitUrl: (function () {
+        var regex = new RegExp("(\\w+)://([^/]+)([^\?]*)([\?].+)?");
+
+        return function (url) {
+            var matches = url.match(regex);
+            var path = (matches.length > 3 ? matches[3] : null);
+            var query = (matches.length > 4 ? matches[4] : null);
+
+            return {
+                "schema": matches[1],
+                "authority": (matches.length > 2 ? matches[2] : null),
+                "path": path,
+                "query": query,
+                "pathAndQuery": (query ? (path + query) : path)
+            };
+        };
+    })()
 
   });
 
