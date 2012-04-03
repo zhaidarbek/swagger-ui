@@ -191,6 +191,7 @@ jQuery(function($) {
     renderApi: function(api) {
       var resourceApisContainer = "#" + this.apiResource.name + "_endpoint_list";
       ApiController.init({
+        resource: this.apiResource,
         item: api,
         container: resourceApisContainer
       });
@@ -221,6 +222,7 @@ jQuery(function($) {
     renderOperation: function(operation) {
       var operationsContainer = "#" + this.api.name + "_endpoint_operations";
       OperationController.init({
+        resource: this.resource,
         item: operation,
         container: operationsContainer
       });
@@ -286,14 +288,69 @@ jQuery(function($) {
 
         for (var p = 0; p < this.operation.parameters.count(); p++) {
           var param = Param.init(this.operation.parameters.all()[p]);
-          param.cleanup();
 
-          $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
+          //
+          if(param.paramType == "body" && !this.isPrimitiveType(param.dataType)){
+              var models = this.resource.rawModels;
+//              $(models).each(function(){
+//                  log(this);
+//              });
+
+              var modelHtml = $("<div/>");
+              this.generateHtml(param.dataType, modelHtml);
+              var tmplArgs = {  modelName: param.name,
+                                modelHtml: modelHtml.html(),
+                                description: param.description};
+              $(param.templateName()).tmpl(tmplArgs).appendTo(operationParamsContainer);
+          } else {
+              param.cleanup();
+              $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
+          }
         }
       }
 
       $(this.elementScope + "_content_sandbox_response_button").click(this.submitOperation);
       $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
+    },
+
+    generateHtml: function(dataType, parent){
+      var model = this.getModel(dataType);
+      if(!model) return;
+      var modelHtml = $("<fieldset style='border: thin solid #333; padding: 1em;'><legend>" + model.id + "</legend></fieldset>");
+      parent.append(modelHtml);
+
+      for (var propIdx in model.properties){
+          var prop = model.properties[propIdx];
+          for (var propName in prop){
+              var propType = prop[propName].type;
+              if(this.isPrimitiveType(propType)){
+                  $("#propTemplate").tmpl({name: propName, type: propType}).appendTo(modelHtml);
+              } else {
+                  this.generateHtml(propType, modelHtml);
+              }
+          }
+      }
+    },
+
+    getModel: function(name) {
+      for(var modelName in this.resource.rawModels){
+          var model = this.resource.rawModels[modelName];
+          if(model.id == name){
+              return model;
+          }
+      }
+      return null;
+    },
+
+    isPrimitiveType: function(dataType){
+        var type = dataType.toLowerCase();
+        if(type == "string" || type == "int" || type == "integer" ||
+            type == "long" || type == "float" || type == "double" ||
+            type == "byte" || type == "boolean" || type == "date"){
+            return true;
+        } else {
+            return false;
+        }
     },
 
     submitOperation: function() {

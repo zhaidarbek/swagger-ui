@@ -53,10 +53,11 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
   };
 
   // Model: ApiResource
-  var ApiResource = Spine.Model.setup("ApiResource", ["name", "baseUrl", "path", "path_json", "path_xml", "description", "apiLists", "modelList"]);
+  var ApiResource = Spine.Model.setup("ApiResource", ["name", "baseUrl", "path", "path_json", "path_xml", "description", "apiLists", "modelList", "rawModels"]);
   ApiResource.include({
     path_json: null,
     path_xml: null,
+    rawModels: null,
 
     init: function(atts) {
       if (atts) this.load(atts);
@@ -70,6 +71,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       // this.name = this.path.substr(1, this.path.length - formatString.length - 1).replace(/\//g, "_");
       this.apiList = Api.sub();
       this.modelList = ApiModel.sub();
+      this.rawModels = [];
     },
 
     addApis: function(apiObjects, basePath) {
@@ -81,6 +83,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
     },
 
     addModel: function(modelObject) {
+      this.rawModels.push($.extend(true, {}, modelObject));
       this.modelList.create(modelObject);
     },
 

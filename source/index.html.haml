@@ -75,9 +75,9 @@
 
 = jquery_template :paramTemplateJson do
   %tr
-    %td.code ${name}
+    %td.code ${modelName}
     %td
-      %textarea{:name => "${name}", :value => ""}
+      {{html modelHtml}}
     %td{:width => "500"} ${description}
 
 
@@ -118,4 +118,25 @@
     %td.code ${name}
     %td -
     %td{:width => "500"} ${description}
+
+= jquery_template :propTemplate do
+  .complexTypeProp
+    %span.code ${name}
+    %input{:minlength => "0", :name => "${name}", :placeholder => "${type}", :type => "text", :value => ""}
+    <br/>
+
+= jquery_template :propTemplateSelect do
+  .complexTypeProp
+    %span.code ${name}
+    %select{:name => "${name}"}
+      {{if required == false }}
+      %option{:value => "", :selected => 'selected'}
+      {{/if}}
+      {{each allowableValues.values}}
+      {{if $value == defaultValue && required == true }}
+      %option{:value => "${$value}", :selected => 'selected'} ${$value}
+      {{else}}
+      %option{:value => "${$value}"} ${$value}
+      {{/if}}
+      {{/each}}
 
