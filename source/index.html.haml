@@ -123,20 +123,13 @@
   .complexTypeProp
     %span.code ${name}
     %input{:minlength => "0", :name => "${name}", :placeholder => "${type}", :type => "text", :value => ""}
-    <br/>
 
 = jquery_template :propTemplateSelect do
   .complexTypeProp
     %span.code ${name}
     %select{:name => "${name}"}
-      {{if required == false }}
       %option{:value => "", :selected => 'selected'}
-      {{/if}}
-      {{each allowableValues.values}}
-      {{if $value == defaultValue && required == true }}
-      %option{:value => "${$value}", :selected => 'selected'} ${$value}
-      {{else}}
+      {{each allowableValues}}
       %option{:value => "${$value}"} ${$value}
-      {{/if}}
       {{/each}}
 

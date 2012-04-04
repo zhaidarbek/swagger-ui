@@ -313,10 +313,11 @@ jQuery(function($) {
       $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
     },
 
-    generateHtml: function(dataType, parent){
+    generateHtml: function(dataType, parent, propName){
       var model = this.getModel(dataType);
       if(!model) return;
-      var modelHtml = $("<fieldset style='border: thin solid #333; padding: 1em;'><legend>" + model.id + "</legend></fieldset>");
+      var modelHtml = $("<fieldset style='border: thin solid #333; padding: 1em;'><legend>"
+                     + (propName ? propName + " (" + model.id + ")" : model.id) + "</legend></fieldset>");
       parent.append(modelHtml);
 
       for (var propIdx in model.properties){
@@ -324,9 +325,17 @@ jQuery(function($) {
           for (var propName in prop){
               var propType = prop[propName].type;
               if(this.isPrimitiveType(propType)){
-                  $("#propTemplate").tmpl({name: propName, type: propType}).appendTo(modelHtml);
+                  var tmplName = "#propTemplate";
+                  var tmplArgs = { name: propName, type: propType };
+                  var constants = prop[propName]['enum'];
+//                  log(constants);
+                  if(constants){
+                      tmplName += "Select";
+                      tmplArgs.allowableValues = constants;
+                  }
+                  $(tmplName).tmpl(tmplArgs).appendTo(modelHtml);
               } else {
-                  this.generateHtml(propType, modelHtml);
+                  this.generateHtml(propType, modelHtml, propName);
               }
           }
       }
