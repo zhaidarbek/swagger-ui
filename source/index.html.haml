@@ -119,6 +119,16 @@
     %td -
     %td{:width => "500"} ${description}
 
+= jquery_template :modelTemplate do
+  %fieldset{:style => "border: thin solid #333; padding: 1em; margin-bottom: 5px;"}
+    %legend ${title}
+
+= jquery_template :modelArrayActionsTemplate do
+  .modelArrayActions
+    %a{:id => "addModel_${modelName}"} Add ${modelName}
+    %a{:id => "removeModel_${modelName}", :style => "display: none;", :class => "removeModel"} Remove last
+
+
 = jquery_template :propTemplate do
   .complexTypeProp
     %span.code ${name}

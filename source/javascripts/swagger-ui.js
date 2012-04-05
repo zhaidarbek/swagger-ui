@@ -267,6 +267,7 @@ jQuery(function($) {
     operation: null,
     templateName: "#operationTemplate",
     elementScope: "#operationTemplate",
+    modelsArrayIndex: {},
 
     init: function() {
       this.render();
@@ -291,13 +292,8 @@ jQuery(function($) {
 
           //
           if(param.paramType == "body" && !this.isPrimitiveType(param.dataType)){
-              var models = this.resource.rawModels;
-//              $(models).each(function(){
-//                  log(this);
-//              });
-
               var modelHtml = $("<div/>");
-              this.generateHtml(param.dataType, modelHtml);
+              this.generateModelHtml(param.dataType, modelHtml);
               var tmplArgs = {  modelName: param.name,
                                 modelHtml: modelHtml.html(),
                                 description: param.description};
@@ -313,12 +309,44 @@ jQuery(function($) {
       $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
     },
 
-    generateHtml: function(dataType, parent, propName){
-      var model = this.getModel(dataType);
-      if(!model) return;
-      var modelHtml = $("<fieldset style='border: thin solid #333; padding: 1em;'><legend>"
-                     + (propName ? propName + " (" + model.id + ")" : model.id) + "</legend></fieldset>");
-      parent.append(modelHtml);
+    generateModelHtml: function(dataType, parent, propName, arrayIndex){
+      log("generateModelHtml for " + dataType);
+      var modelDef = this.getModelDef(dataType);
+      if(!modelDef) return;
+      var model = modelDef.model;
+      var fieldsetCaption = (arrayIndex !== undefined) ? arrayIndex : (propName ? propName + " (" + model.id + ")" : model.id);
+      var modelHtml = $("#modelTemplate").tmpl({ title: fieldsetCaption });
+      modelHtml.appendTo(parent);
+
+      if(modelDef.container){
+          $("#modelArrayActionsTemplate").tmpl({modelName: model.id}).appendTo(modelHtml);
+
+          $("#addModel_" + model.id).live('click', {refThis: this}, function(event){
+              var refThis = event.data.refThis;
+              if(refThis.modelsArrayIndex[model.id] === undefined){
+                  refThis.modelsArrayIndex[model.id] = 0;
+              } else {
+                  refThis.modelsArrayIndex[model.id] = refThis.modelsArrayIndex[model.id] + 1;
+              }
+              refThis.generateModelHtml(model.id, $(this).parent().parent(), null, refThis.modelsArrayIndex[model.id]);
+              $("#removeModel_" + model.id).show();
+          });
+
+          $("#removeModel_" + model.id).live('click', {refThis: this}, function(event){
+              var refThis = event.data.refThis;
+              if(refThis.modelsArrayIndex[model.id] !== undefined){
+                  if(refThis.modelsArrayIndex[model.id] >= 0){
+                      $('fieldset:last-child', $(this).parent().parent()).remove();
+                      refThis.modelsArrayIndex[model.id] = refThis.modelsArrayIndex[model.id] - 1;
+                  }
+                  if(refThis.modelsArrayIndex[model.id] < 0){
+                      $(this).hide();
+                  }
+              }
+          });
+
+          return;
+      }
 
       for (var propIdx in model.properties){
           var prop = model.properties[propIdx];
@@ -335,17 +363,27 @@ jQuery(function($) {
                   }
                   $(tmplName).tmpl(tmplArgs).appendTo(modelHtml);
               } else {
-                  this.generateHtml(propType, modelHtml, propName);
+                  this.generateModelHtml(propType, modelHtml, propName);
               }
           }
       }
     },
 
-    getModel: function(name) {
-      for(var modelName in this.resource.rawModels){
-          var model = this.resource.rawModels[modelName];
-          if(model.id == name){
-              return model;
+    getModelDef: function(dataType) {
+      var regex = new RegExp("(List|Set|Array)\\[(\\w*)\\]");
+      var matches = dataType.match(regex);
+      var modelDef = { model: null, container: null };
+      var modelName = dataType;
+      if(matches){
+          modelName = matches[2];
+          modelDef.container = matches[1];
+      }
+
+      for(var modelIdx in this.resource.rawModels){
+          var model = this.resource.rawModels[modelIdx];
+          if(model.id == modelName){
+              modelDef.model = model;
+              return modelDef;
           }
       }
       return null;
