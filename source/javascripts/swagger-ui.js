@@ -309,80 +309,108 @@ jQuery(function($) {
       $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
     },
 
-    generateModelHtml: function(dataType, parent, propName, arrayIndex){
+    generateModelHtml: function(dataType, parentNode, propName, parentModelDef){
       log("generateModelHtml for " + dataType);
       var modelDef = this.getModelDef(dataType);
       if(!modelDef) return;
-      var model = modelDef.model;
-      var fieldsetCaption = (arrayIndex !== undefined) ? arrayIndex : (propName ? propName + " (" + model.id + ")" : model.id);
+
+      var fieldsetCaption;
+      if(parentModelDef && parentModelDef.container){
+          var arrayItemId = parentModelDef.arrayItemId;
+//          log("fieldsetCaption for " + arrayItemId);
+          fieldsetCaption = this.modelsArrayIndex[arrayItemId];
+      } else if(modelDef.primitive) {
+          fieldsetCaption = propName;
+      } else {
+          fieldsetCaption = (propName ? propName + " (" + modelDef.model.id + ")" : modelDef.model.id);
+      }
+
       var modelHtml = $("#modelTemplate").tmpl({ title: fieldsetCaption });
-      modelHtml.appendTo(parent);
+      modelHtml.appendTo(parentNode);
 
       if(modelDef.container){
-          $("#modelArrayActionsTemplate").tmpl({modelName: model.id}).appendTo(modelHtml);
+          var arrayItemId = this.elementScope.substring(1) + "_" + parentModelDef.model.id + "_" + propName;
+          $("#modelArrayActionsTemplate").tmpl({itemId: arrayItemId, propName: propName}).appendTo(modelHtml);
 
-          $("#addModel_" + model.id).live('click', {refThis: this}, function(event){
+          $("#addArrayItem_" + arrayItemId).live('click', {refThis: this}, function(event){
+//              log("adding " + arrayItemId);
               var refThis = event.data.refThis;
-              if(refThis.modelsArrayIndex[model.id] === undefined){
-                  refThis.modelsArrayIndex[model.id] = 0;
+              if(refThis.modelsArrayIndex[arrayItemId] === undefined){
+                  refThis.modelsArrayIndex[arrayItemId] = 0;
               } else {
-                  refThis.modelsArrayIndex[model.id] = refThis.modelsArrayIndex[model.id] + 1;
+                  refThis.modelsArrayIndex[arrayItemId] = refThis.modelsArrayIndex[arrayItemId] + 1;
               }
-              refThis.generateModelHtml(model.id, $(this).parent().parent(), null, refThis.modelsArrayIndex[model.id]);
-              $("#removeModel_" + model.id).show();
+              if(modelDef.model){
+                  modelDef.arrayItemId = arrayItemId;
+                  refThis.generateModelHtml(modelDef.model.id, $(this).parent().parent(), null, modelDef);
+              } else {
+                  $("#propTemplate").tmpl({ name: refThis.modelsArrayIndex[arrayItemId], type: modelDef.primitive }).appendTo($(this).parent().parent());
+              }
+              $("#removeArrayItem_" + arrayItemId).show();
           });
 
-          $("#removeModel_" + model.id).live('click', {refThis: this}, function(event){
+          $("#removeArrayItem_" + arrayItemId).live('click', {refThis: this}, function(event){
+//              log("removing " + arrayItemId);
               var refThis = event.data.refThis;
-              if(refThis.modelsArrayIndex[model.id] !== undefined){
-                  if(refThis.modelsArrayIndex[model.id] >= 0){
-                      $('fieldset:last-child', $(this).parent().parent()).remove();
-                      refThis.modelsArrayIndex[model.id] = refThis.modelsArrayIndex[model.id] - 1;
+              if(refThis.modelsArrayIndex[arrayItemId] !== undefined){
+                  if(refThis.modelsArrayIndex[arrayItemId] >= 0){
+                      if(modelDef.primitive){
+                          $('div.complexTypeProp:last-child', $(this).parent().parent()).remove();
+                      } else {
+                          $('fieldset:last-child', $(this).parent().parent()).remove();
+                      }
+                      refThis.modelsArrayIndex[arrayItemId] = refThis.modelsArrayIndex[arrayItemId] - 1;
                   }
-                  if(refThis.modelsArrayIndex[model.id] < 0){
+                  if(refThis.modelsArrayIndex[arrayItemId] < 0){
                       $(this).hide();
                   }
               }
           });
-
-          return;
-      }
-
-      for (var propIdx in model.properties){
-          var prop = model.properties[propIdx];
-          for (var propName in prop){
-              var propType = prop[propName].type;
-              if(this.isPrimitiveType(propType)){
-                  var tmplName = "#propTemplate";
-                  var tmplArgs = { name: propName, type: propType };
-                  var constants = prop[propName]['enum'];
-//                  log(constants);
-                  if(constants){
-                      tmplName += "Select";
-                      tmplArgs.allowableValues = constants;
+      } else if(modelDef.model){
+          for (var propIdx in modelDef.model.properties){
+              var prop = modelDef.model.properties[propIdx];
+              for (var propName in prop){
+                  var propType = prop[propName].type;
+                  if(this.isPrimitiveType(propType)){
+                      var tmplName = "#propTemplate";
+                      var tmplArgs = { name: propName, type: propType };
+                      var constants = prop[propName]['enum'];
+    //                  log(constants);
+                      if(constants){
+                          tmplName += "Select";
+                          tmplArgs.allowableValues = constants;
+                      }
+                      $(tmplName).tmpl(tmplArgs).appendTo(modelHtml);
+                  } else {
+                      this.generateModelHtml(propType, modelHtml, propName, modelDef);
                   }
-                  $(tmplName).tmpl(tmplArgs).appendTo(modelHtml);
-              } else {
-                  this.generateModelHtml(propType, modelHtml, propName);
               }
           }
       }
     },
 
-    getModelDef: function(dataType) {
+    getModelDef: function(customOrContainerType) {
+      var modelDef = { model: null, container: null, primitive: null };
       var regex = new RegExp("(List|Set|Array)\\[(\\w*)\\]");
-      var matches = dataType.match(regex);
-      var modelDef = { model: null, container: null };
-      var modelName = dataType;
+      var matches = customOrContainerType.match(regex);
+      var modelName;
       if(matches){
-          modelName = matches[2];
           modelDef.container = matches[1];
+          modelName = matches[2];
+          if(this.isPrimitiveType(modelName)){
+              // List[string]
+              modelDef.primitive = modelName;
+              return modelDef;
+          }
+      } else {
+          modelName = customOrContainerType;
       }
 
       for(var modelIdx in this.resource.rawModels){
           var model = this.resource.rawModels[modelIdx];
           if(model.id == modelName){
               modelDef.model = model;
+              // CustomType or List[CustomType]
               return modelDef;
           }
       }

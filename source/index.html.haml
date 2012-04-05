@@ -125,8 +125,8 @@
 
 = jquery_template :modelArrayActionsTemplate do
   .modelArrayActions
-    %a{:id => "addModel_${modelName}"} Add ${modelName}
-    %a{:id => "removeModel_${modelName}", :style => "display: none;", :class => "removeModel"} Remove last
+    %a{:id => "addArrayItem_${itemId}"} Add ${propName} item
+    %a{:id => "removeArrayItem_${itemId}", :style => "display: none;", :class => "removeArrayItem"} Remove last item
 
 
 = jquery_template :propTemplate do
