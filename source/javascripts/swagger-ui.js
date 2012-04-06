@@ -387,8 +387,8 @@ jQuery(function($) {
                   var propPath = parentModelDef ? parentModelDef.propPath : "";
                   if(this.isPrimitiveType(propType)){
                       var tmplName = "#propTemplate";
-                      var tmplArgs = { name: propName,
-                                    path: (propPath ? propPath + "." + propName : propName), type: propType };
+                      var tmplArgs = { name: propName, required: prop[propName].required, dataType: propType,
+                                    path: (propPath ? propPath + "." + propName : propName) };
                       var constants = prop[propName]['enum'];
     //                  log(constants);
                       if(constants){

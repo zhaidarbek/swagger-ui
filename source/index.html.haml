@@ -69,16 +69,16 @@
   %tr
     %td.code ${name}
     %td
-      %input{:minlength => "0", :name => "${name}", :placeholder => "", :type => "text", :value => ""}
+      %input{:minlength => "0", :name => "${name}", :placeholder => "${dataType}", :type => "text", :value => ""}
     %td{:width => "500"} ${description}
 
 
 = jquery_template :paramTemplateJson do
   %tr
-    %td.code ${modelName}
+    %td.code.required ${modelName}
     %td
       {{html modelHtml}}
-    %td{:width => "500"} ${description}
+    %td.required{:width => "500"} ${description}
 
 
 = jquery_template :paramTemplateSelect do
@@ -103,7 +103,7 @@
   %tr
     %td.code.required ${name}
     %td
-      %input.required{:minlength => "1", :name => "${name}", :placeholder => "(required)", :type => "text", :value => ""}
+      %input.required{:minlength => "1", :name => "${name}", :placeholder => "${dataType} (required)", :type => "text", :value => ""}
     %td{:width => "500"}
       %strong ${description}
 
@@ -131,15 +131,28 @@
 
 = jquery_template :propTemplate do
   .complexTypeProp
+    {{if required == true }}
+    %span.code.required ${name}
+    %input.required{:minlength => "0", :name => "${path}", :placeholder => "${dataType} (required)", :type => "text", :value => ""}
+    {{else}}
     %span.code ${name}
-    %input{:minlength => "0", :name => "${path}", :placeholder => "${type}", :type => "text", :value => ""}
+    %input{:minlength => "0", :name => "${path}", :placeholder => "${dataType}", :type => "text", :value => ""}
+    {{/if}}
 
 = jquery_template :propTemplateSelect do
   .complexTypeProp
+    {{if required == true }}
+    %span.code.required ${name}
+    %select.required{:name => "${path}"}
+      {{each allowableValues}}
+      %option{:value => "${$value}"} ${$value}
+      {{/each}}
+    {{else}}
     %span.code ${name}
     %select{:name => "${path}"}
       %option{:value => "", :selected => 'selected'}
       {{each allowableValues}}
       %option{:value => "${$value}"} ${$value}
       {{/each}}
+    {{/if}}
 
