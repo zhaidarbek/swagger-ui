@@ -471,7 +471,7 @@ jQuery(function($) {
         if(invocationUrl){
             var requestData;
             if(this.hasComplexType){
-                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0], ".", false));
+                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0]));
             } else {
                 requestData = this.operation._queryParams;
             }
@@ -522,7 +522,7 @@ jQuery(function($) {
         if(invocationUrl){
             var requestData;
             if(this.hasComplexType){
-                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0], ".", false));
+                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0]));
             } else {
                 requestData = this.operation._queryParams;
             }
