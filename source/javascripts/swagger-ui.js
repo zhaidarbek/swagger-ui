@@ -270,6 +270,7 @@ jQuery(function($) {
     elementScope: "#operationTemplate",
     modelsArrayIndex: {},
     hasComplexType: false,
+    containerParamName: null,
 
     init: function() {
       this.render();
@@ -296,12 +297,17 @@ jQuery(function($) {
           //
           if(param.paramType == "body" && !this.isPrimitiveType(param.dataType)){
               var modelHtml = $("<div/>");
-              this.generateModelHtml(param.dataType, modelHtml);
+              this.generateModelHtml(param.dataType, modelHtml, null, param.name);
               var tmplArgs = {  modelName: param.name,
                                 modelHtml: modelHtml.html(),
                                 description: param.description};
               $(param.templateName()).tmpl(tmplArgs).appendTo(operationParamsContainer);
               this.hasComplexType = true;
+              var modelDef = this.getModelDef(param.dataType);
+              if(modelDef.container){
+                  // List[string] or List[ComplexType]
+                  this.containerParamName = param.name;
+              }
           } else {
               param.cleanup();
               $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
@@ -313,7 +319,7 @@ jQuery(function($) {
       $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
     },
 
-    generateModelHtml: function(dataType, parentNode, parentModelDef){
+    generateModelHtml: function(dataType, parentNode, parentModelDef, rootParamName){
       log("generateModelHtml for " + dataType);
       var modelDef = this.getModelDef(dataType);
       if(!modelDef) return;
@@ -328,15 +334,21 @@ jQuery(function($) {
               fieldsetCaption = parentModelDef.propName + " (" + modelDef.model.id + ")";
           }
       } else {
-          fieldsetCaption = modelDef.model.id; // actual model (highest level ancestor)
+          // actual model (highest level ancestor)
+          if(modelDef.model){
+              fieldsetCaption = modelDef.model.id;
+          } else {
+              // List[string]
+              fieldsetCaption = rootParamName;
+          }
       }
 
       var modelHtml = $("#modelTemplate").tmpl({ title: fieldsetCaption });
       modelHtml.appendTo(parentNode);
 
       if(modelDef.container){
-          var arrayItemId = parentModelDef.propPath.replace(".", "_");
-          $("#modelArrayActionsTemplate").tmpl({itemPath: arrayItemId, propName: parentModelDef.propName}).appendTo(modelHtml);
+          var arrayItemId = parentModelDef ? parentModelDef.propPath.replace(".", "_") : rootParamName;
+          $("#modelArrayActionsTemplate").tmpl({itemPath: arrayItemId, propName: (parentModelDef ? parentModelDef.propName : rootParamName )}).appendTo(modelHtml);
 
           var context = this.elementScope + "_params";
           $(".addArrayItem_" + arrayItemId, context).live('click', {refThis: this}, function(event){
@@ -348,16 +360,21 @@ jQuery(function($) {
                   refThis.modelsArrayIndex[arrayItemId]++;
               }
 
-              var propPath = parentModelDef ? parentModelDef.propPath : "";
+              var propPath;
+              if(parentModelDef){
+                  propPath = parentModelDef.propPath;
+              } else if(rootParamName){
+                  propPath = rootParamName;
+              }
               var pathArrIdx = "[" + refThis.modelsArrayIndex[arrayItemId] + "]";
               if(modelDef.model){
-                  modelDef.propPath = propPath ? propPath + pathArrIdx : pathArrIdx;
+                  modelDef.propPath = propPath ? propPath + pathArrIdx : "";
                   modelDef.arrayItemId = arrayItemId;
                   refThis.generateModelHtml(modelDef.model.id, $(this).parent().parent(), modelDef);
               } else {
                   var tmplArgs = { name: refThis.modelsArrayIndex[arrayItemId],
-                                    path: propPath ? propPath + pathArrIdx : pathArrIdx,
-                                    type: modelDef.primitive };
+                                    path: propPath ? propPath + pathArrIdx : "",
+                                    dataType: modelDef.primitive, required: false };
                   $("#propTemplate").tmpl(tmplArgs).appendTo($(this).parent().parent());
               }
               $(".removeArrayItem_" + arrayItemId, context).show();
@@ -473,7 +490,14 @@ jQuery(function($) {
         if(invocationUrl){
             var requestData;
             if(this.hasComplexType){
-                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0]));
+                var serialized = form2js(form.find("td>fieldset")[0]);
+                if(this.containerParamName){
+                    // json array
+                    requestData = JSON.stringify(serialized[this.containerParamName]);
+                } else {
+                    // json object
+                    requestData = JSON.stringify(serialized);
+                }
             } else {
                 requestData = this.operation._queryParams;
             }
@@ -524,7 +548,14 @@ jQuery(function($) {
         if(invocationUrl){
             var requestData;
             if(this.hasComplexType){
-                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0]));
+                var serialized = form2js(form.find("td>fieldset")[0]);
+                if(this.containerParamName){
+                    // json array
+                    requestData = JSON.stringify(serialized[this.containerParamName]);
+                } else {
+                    // json object
+                    requestData = JSON.stringify(serialized);
+                }
             } else {
                 requestData = this.operation._queryParams;
             }
