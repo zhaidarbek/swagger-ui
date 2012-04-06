@@ -268,6 +268,7 @@ jQuery(function($) {
     templateName: "#operationTemplate",
     elementScope: "#operationTemplate",
     modelsArrayIndex: {},
+    hasComplexType: false,
 
     init: function() {
       this.render();
@@ -298,6 +299,7 @@ jQuery(function($) {
                                 modelHtml: modelHtml.html(),
                                 description: param.description};
               $(param.templateName()).tmpl(tmplArgs).appendTo(operationParamsContainer);
+              this.hasComplexType = true;
           } else {
               param.cleanup();
               $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
@@ -309,48 +311,57 @@ jQuery(function($) {
       $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
     },
 
-    generateModelHtml: function(dataType, parentNode, propName, parentModelDef){
+    generateModelHtml: function(dataType, parentNode, parentModelDef){
       log("generateModelHtml for " + dataType);
       var modelDef = this.getModelDef(dataType);
       if(!modelDef) return;
 
       var fieldsetCaption;
-      if(parentModelDef && parentModelDef.container){
-          var arrayItemId = parentModelDef.arrayItemId;
-//          log("fieldsetCaption for " + arrayItemId);
-          fieldsetCaption = this.modelsArrayIndex[arrayItemId];
-      } else if(modelDef.primitive) {
-          fieldsetCaption = propName;
+      if(parentModelDef){
+          if(parentModelDef.container){ // on click Add more
+              fieldsetCaption = this.modelsArrayIndex[parentModelDef.arrayItemId];
+          } else if(modelDef.primitive) { // List[string]
+              fieldsetCaption = parentModelDef.propName;
+          } else if(modelDef.model) { // List[ComplexType]
+              fieldsetCaption = parentModelDef.propName + " (" + modelDef.model.id + ")";
+          }
       } else {
-          fieldsetCaption = (propName ? propName + " (" + modelDef.model.id + ")" : modelDef.model.id);
+          fieldsetCaption = modelDef.model.id; // actual model (highest level ancestor)
       }
 
       var modelHtml = $("#modelTemplate").tmpl({ title: fieldsetCaption });
       modelHtml.appendTo(parentNode);
 
       if(modelDef.container){
-          var arrayItemId = this.elementScope.substring(1) + "_" + parentModelDef.model.id + "_" + propName;
-          $("#modelArrayActionsTemplate").tmpl({itemId: arrayItemId, propName: propName}).appendTo(modelHtml);
+          var arrayItemId = parentModelDef.propPath.replace(".", "_");
+          $("#modelArrayActionsTemplate").tmpl({itemPath: arrayItemId, propName: parentModelDef.propName}).appendTo(modelHtml);
 
-          $("#addArrayItem_" + arrayItemId).live('click', {refThis: this}, function(event){
-//              log("adding " + arrayItemId);
+          var context = this.elementScope + "_params";
+          $(".addArrayItem_" + arrayItemId, context).live('click', {refThis: this}, function(event){
+              log("adding " + arrayItemId);
               var refThis = event.data.refThis;
               if(refThis.modelsArrayIndex[arrayItemId] === undefined){
                   refThis.modelsArrayIndex[arrayItemId] = 0;
               } else {
-                  refThis.modelsArrayIndex[arrayItemId] = refThis.modelsArrayIndex[arrayItemId] + 1;
+                  refThis.modelsArrayIndex[arrayItemId]++;
               }
+
+              var propPath = parentModelDef ? parentModelDef.propPath : "";
+              var pathArrIdx = "[" + refThis.modelsArrayIndex[arrayItemId] + "]";
               if(modelDef.model){
+                  modelDef.propPath = propPath ? propPath + pathArrIdx : pathArrIdx;
                   modelDef.arrayItemId = arrayItemId;
-                  refThis.generateModelHtml(modelDef.model.id, $(this).parent().parent(), null, modelDef);
+                  refThis.generateModelHtml(modelDef.model.id, $(this).parent().parent(), modelDef);
               } else {
-                  $("#propTemplate").tmpl({ name: refThis.modelsArrayIndex[arrayItemId], type: modelDef.primitive }).appendTo($(this).parent().parent());
+                  var tmplArgs = { name: refThis.modelsArrayIndex[arrayItemId],
+                                    path: propPath ? propPath + pathArrIdx : pathArrIdx,
+                                    type: modelDef.primitive };
+                  $("#propTemplate").tmpl(tmplArgs).appendTo($(this).parent().parent());
               }
-              $("#removeArrayItem_" + arrayItemId).show();
+              $(".removeArrayItem_" + arrayItemId, context).show();
           });
 
-          $("#removeArrayItem_" + arrayItemId).live('click', {refThis: this}, function(event){
-//              log("removing " + arrayItemId);
+          $(".removeArrayItem_" + arrayItemId, context).live('click', {refThis: this}, function(event){
               var refThis = event.data.refThis;
               if(refThis.modelsArrayIndex[arrayItemId] !== undefined){
                   if(refThis.modelsArrayIndex[arrayItemId] >= 0){
@@ -359,7 +370,7 @@ jQuery(function($) {
                       } else {
                           $('fieldset:last-child', $(this).parent().parent()).remove();
                       }
-                      refThis.modelsArrayIndex[arrayItemId] = refThis.modelsArrayIndex[arrayItemId] - 1;
+                      refThis.modelsArrayIndex[arrayItemId]--;
                   }
                   if(refThis.modelsArrayIndex[arrayItemId] < 0){
                       $(this).hide();
@@ -371,9 +382,11 @@ jQuery(function($) {
               var prop = modelDef.model.properties[propIdx];
               for (var propName in prop){
                   var propType = prop[propName].type;
+                  var propPath = parentModelDef ? parentModelDef.propPath : "";
                   if(this.isPrimitiveType(propType)){
                       var tmplName = "#propTemplate";
-                      var tmplArgs = { name: propName, type: propType };
+                      var tmplArgs = { name: propName,
+                                    path: (propPath ? propPath + "." + propName : propName), type: propType };
                       var constants = prop[propName]['enum'];
     //                  log(constants);
                       if(constants){
@@ -382,7 +395,9 @@ jQuery(function($) {
                       }
                       $(tmplName).tmpl(tmplArgs).appendTo(modelHtml);
                   } else {
-                      this.generateModelHtml(propType, modelHtml, propName, modelDef);
+                      modelDef.propName = propName;
+                      modelDef.propPath = propPath ? propPath + "." + propName : propName;
+                      this.generateModelHtml(propType, modelHtml, modelDef);
                   }
               }
           }
@@ -451,17 +466,23 @@ jQuery(function($) {
       });
 
       if (error_free) {
-        var formData = form.serializeArray();
+        var formData = form.find("td>input, td>select").serializeArray();
         var invocationUrl = this.operation.invocationUrl(formData);
-        log(this.operation._headers);
         if(invocationUrl){
+            var requestData;
+            if(this.hasComplexType){
+                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0], ".", false));
+            } else {
+                requestData = this.operation._queryParams;
+            }
+
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
             $.ajax({
                 type: this.operation.httpMethod,
                 contentType: "application/json; charset=utf-8",
                 url: invocationUrl,
                 headers: this.operation._headers,
-                data: this.operation._queryParams,
+                data: requestData,
                 dataType: "json",
                 success: this.showResponse
             }).complete(this.showCompleteStatus).error(this.showErrorStatus);
@@ -493,18 +514,27 @@ jQuery(function($) {
       });
 
       if (error_free) {
-        var formData = form.serializeArray();
+        var formData = form.find("td>input, td>select").serializeArray();
+        log(formData);
         var privateKey = $("#input_privateKey").val();
         var invocationUrl = this.operation.invocationUrlSigned(formData, jQuery.trim(privateKey));
         log(this.operation._headers);
         if(invocationUrl){
+            var requestData;
+            if(this.hasComplexType){
+                requestData = JSON.stringify(form2js(form.find("td>fieldset")[0], ".", false));
+            } else {
+                requestData = this.operation._queryParams;
+            }
+            log(requestData);
+
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
             $.ajax({
                 type: this.operation.httpMethod,
                 contentType: "application/json; charset=utf-8",
                 url: invocationUrl,
                 headers: this.operation._headers,
-                data: this.operation._queryParams,
+                data: requestData,
                 dataType: "json",
                 success: this.showResponse
             }).complete(this.showCompleteStatus).error(this.showErrorStatus);

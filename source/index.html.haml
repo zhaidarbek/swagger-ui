@@ -125,19 +125,19 @@
 
 = jquery_template :modelArrayActionsTemplate do
   .modelArrayActions
-    %a{:id => "addArrayItem_${itemId}"} Add ${propName} item
-    %a{:id => "removeArrayItem_${itemId}", :style => "display: none;", :class => "removeArrayItem"} Remove last item
+    %a{:class => "addArrayItem_${itemPath}"} Add ${propName} item
+    %a{:class => "removeArrayItem_${itemPath}", :style => "display: none; float: right;"} Remove last item
 
 
 = jquery_template :propTemplate do
   .complexTypeProp
     %span.code ${name}
-    %input{:minlength => "0", :name => "${name}", :placeholder => "${type}", :type => "text", :value => ""}
+    %input{:minlength => "0", :name => "${path}", :placeholder => "${type}", :type => "text", :value => ""}
 
 = jquery_template :propTemplateSelect do
   .complexTypeProp
     %span.code ${name}
-    %select{:name => "${name}"}
+    %select{:name => "${path}"}
       %option{:value => "", :selected => 'selected'}
       {{each allowableValues}}
       %option{:value => "${$value}"} ${$value}
