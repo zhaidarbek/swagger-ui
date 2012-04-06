@@ -22,40 +22,40 @@
 
 = jquery_template :apiTemplate do
   %li.endpoint
-    %ul.operations{:id => "${name}_endpoint_operations"}
+    %ul.operations{:id => "${resourceName}_endpoint_operations"}
 
 = jquery_template :operationTemplate do
-  %li.operation{:class => "${httpMethodLowercase}", :id => "${apiName}_${nickname}_${httpMethod}"}
+  %li.operation{:class => "${httpMethodLowercase}", :id => "${resourceName}_${nickname}_${httpMethod}"}
     .heading
       %h3
         %span.http_method
-          %a{:href => "#!/${apiName}/${nickname}_${httpMethod}", :onclick => "Docs.toggleOperationContent('${apiName}_${nickname}_${httpMethod}_content');"} ${httpMethod}
+          %a{:href => "#!/${resourceName}/${nickname}_${httpMethod}", :onclick => "Docs.toggleOperationContent('${resourceName}_${nickname}_${httpMethod}_content');"} ${httpMethod}
         %span.path
-          %a{:href => "#!/${apiName}/${nickname}_${httpMethod}", :onclick => "Docs.toggleOperationContent('${apiName}_${nickname}_${httpMethod}_content');"} ${path_json}
+          %a{:href => "#!/${resourceName}/${nickname}_${httpMethod}", :onclick => "Docs.toggleOperationContent('${resourceName}_${nickname}_${httpMethod}_content');"} ${path_json}
       %ul.options
         %li
-          %a{:href => "#!/${apiName}/${nickname}_${httpMethod}", :onclick => "Docs.toggleOperationContent('${apiName}_${nickname}_${httpMethod}_content');"} ${summary}
-    .content{:id => "${apiName}_${nickname}_${httpMethod}_content", :style => "display:none"}
+          %a{:href => "#!/${resourceName}/${nickname}_${httpMethod}", :onclick => "Docs.toggleOperationContent('${resourceName}_${nickname}_${httpMethod}_content');"} ${summary}
+    .content{:id => "${resourceName}_${nickname}_${httpMethod}_content", :style => "display:none"}
       {{if notes}}
       %h4 Implementation Notes
       %p ${notes}
       {{/if}}
-      %form.sandbox{"accept-charset" => "UTF-8", :action => "#", :id => "${apiName}_${nickname}_${httpMethod}_form", :method => "post"}
+      %form.sandbox{"accept-charset" => "UTF-8", :action => "#", :id => "${resourceName}_${nickname}_${httpMethod}_form", :method => "post"}
         %div{:style => "margin:0;padding:0;display:inline"}
         %h4 Parameters
         %table.fullwidth
           %thead
             %tr
               %th Parameter
-              %th{:id => "${apiName}_${nickname}_${httpMethod}_value_header"} Value
+              %th{:id => "${resourceName}_${nickname}_${httpMethod}_value_header"} Value
               %th Description
-          %tbody{:id => "${apiName}_${nickname}_${httpMethod}_params"}
-        .sandbox_header{:id => "${apiName}_${nickname}_${httpMethod}_content_sandbox_response_header"}
-          %input.submit{:id => "${apiName}_${nickname}_${httpMethod}_content_sandbox_response_button", :name => "commit", :type => "button", :value => "Try it out!"}
-          %input.submit{:id => "${apiName}_${nickname}_${httpMethod}_content_sandbox_response_button_signed", :name => "commit", :type => "button", :value => "Send signed"}
-          %a{:href => "#", :id => "${apiName}_${nickname}_${httpMethod}_content_sandbox_response_hider", :onclick => "$('\#${apiName}_${nickname}_${httpMethod}_content_sandbox_response').slideUp();$(this).fadeOut(); return false;", :style => "display:none"} Hide Response
-          %img{:alt => "Throbber", :id => "${apiName}_${nickname}_${httpMethod}_content_sandbox_response_throbber", :src => "http://swagger.wordnik.com/images/throbber.gif", :style => "display:none"}
-      .response{:id => "${apiName}_${nickname}_${httpMethod}_content_sandbox_response", :style => "display:none"}
+          %tbody{:id => "${resourceName}_${nickname}_${httpMethod}_params"}
+        .sandbox_header{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_header"}
+          %input.submit{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_button", :name => "commit", :type => "button", :value => "Try it out!"}
+          %input.submit{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_button_signed", :name => "commit", :type => "button", :value => "Send signed"}
+          %a{:href => "#", :id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_hider", :onclick => "$('\#${resourceName}_${nickname}_${httpMethod}_content_sandbox_response').slideUp();$(this).fadeOut(); return false;", :style => "display:none"} Hide Response
+          %img{:alt => "Throbber", :id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_throbber", :src => "http://swagger.wordnik.com/images/throbber.gif", :style => "display:none"}
+      .response{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response", :style => "display:none"}
         %h4 Request URL
         .block.request_url
         %h4 Response Body

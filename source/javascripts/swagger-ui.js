@@ -216,11 +216,12 @@ jQuery(function($) {
     },
 
     render: function() {
+      this.item.resourceName = this.resource.name;
       $(this.templateName).tmpl(this.item).appendTo(this.container);
     },
 
     renderOperation: function(operation) {
-      var operationsContainer = "#" + this.api.name + "_endpoint_operations";
+      var operationsContainer = "#" + this.resource.name + "_endpoint_operations";
       OperationController.init({
         resource: this.resource,
         item: operation,
@@ -275,12 +276,13 @@ jQuery(function($) {
 
       this.operation = this.item;
       this.isGetOperation = (this.operation.httpMethodLowercase == "get");
-      this.elementScope = "#" + this.operation.apiName + "_" + this.operation.nickname + "_" + this.operation.httpMethod;
+      this.elementScope = "#" + this.resource.name + "_" + this.operation.nickname + "_" + this.operation.httpMethod;
 
       this.renderParams();
     },
 
     render: function() {
+      this.item.resourceName = this.resource.name;
       $(this.templateName).tmpl(this.item).appendTo(this.container);
     },
 
