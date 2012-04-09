@@ -347,7 +347,7 @@ jQuery(function($) {
       modelHtml.appendTo(parentNode);
 
       if(modelDef.container){
-          var arrayItemId = parentModelDef ? parentModelDef.propPath.replace(".", "_") : rootParamName;
+          var arrayItemId = parentModelDef ? parentModelDef.propPath.replace(".", "_").replace("[", "_").replace("]", "_") : rootParamName;
           $("#modelArrayActionsTemplate").tmpl({itemPath: arrayItemId, propName: (parentModelDef ? parentModelDef.propName : rootParamName )}).appendTo(modelHtml);
 
           var context = this.elementScope + "_params";
