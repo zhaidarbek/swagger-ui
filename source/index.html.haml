@@ -1,4 +1,4 @@
-#resources_container.container
+#resources_container.container{:style => "padding-top: 60px;"}
   %ul#resources
 
 = jquery_template :resourceTemplate do
@@ -133,7 +133,8 @@
   .complexTypeProp
     {{if required == true }}
     %span.code.required ${name}
-    %input.required{:minlength => "0", :name => "${path}", :placeholder => "${dataType} (required)", :type => "text", :value => ""}
+    %div{:style => "display: inline-block;"}
+      %input.required{:minlength => "0", :name => "${path}", :placeholder => "${dataType} (required)", :type => "text", :value => ""}
     {{else}}
     %span.code ${name}
     %input{:minlength => "0", :name => "${path}", :placeholder => "${dataType}", :type => "text", :value => ""}

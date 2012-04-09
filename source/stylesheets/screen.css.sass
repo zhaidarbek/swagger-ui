@@ -29,8 +29,11 @@ body
     margin: 10px 15px
     font-style: italic
     color: #999
-  
+
   #header
+    position: fixed
+    width: 98%
+    z-index: 1000
     background-color: $main_color_light
     padding: 14px
 
@@ -41,7 +44,7 @@ body
       background: transparent image_url('http://swagger.wordnik.com/images/logo_small.png') no-repeat left center
       padding: 20px 0 20px 40px
       color: white
-  
+
     form#api_selector
       @include float_right
       .input
@@ -66,7 +69,7 @@ body
           @include border-radius(4px)
           &:hover
             background-color: $main_color_dark
-  
+
   p#colophon
     margin: 0 15px 40px 15px
     padding: 10px 0
@@ -77,13 +80,13 @@ body
     font-style: italic
     a
       text-decoration: none
-      color: $main_color_dark      
+      color: $main_color_dark
 
   ul#resources
     padding: 0 15px
     font-family: "Droid Sans", sans-serif
     font-size: .9em
-    
+
     li.resource
       border-bottom: 1px solid #DDD
       &:last-child
@@ -135,3 +138,4 @@ body
                 @include li_colored_operation($http_put_color)
               &.delete
                 @include li_colored_operation($http_delete_color)
+

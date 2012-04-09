@@ -9,15 +9,12 @@ jQuery(function($) {
     baseUrlList: new Array(),
 
     init: function() {
+
       if (this.supportsLocalStorage()) {
-        var baseUrl = localStorage.getItem("com.wordnik.swagger.ui.baseUrl");
-        var apiKey = localStorage.getItem("com.wordnik.swagger.ui.apiKey");
+        var privateKey = localStorage.getItem("com.wordnik.swagger.ui.privateKey");
 
-        if (baseUrl && baseUrl.length > 0)
-        $("#input_baseUrl").val(baseUrl);
-
-        if (apiKey && apiKey.length > 0)
-        $("#input_apiKey").val(apiKey);
+        if (privateKey && privateKey.length > 0)
+        $("#input_privateKey").val(privateKey);
 
       } else {
         log("localStorage not supported, user will need to specifiy the api url");
@@ -75,12 +72,14 @@ jQuery(function($) {
     },
 
     showApi: function() {
-      var baseUrl = jQuery.trim($("#input_baseUrl").val());
-      var apiKey = jQuery.trim($("#input_apiKey").val());
+      var baseUrl = "https://dev-api.groupdocs.com/v2.0/spec";
+      var apiKey = "";
+      var privateKey = jQuery.trim($("#input_privateKey").val());
       if (baseUrl.length == 0) {
         $("#input_baseUrl").wiggle();
       } else {
         if (this.supportsLocalStorage()) {
+          localStorage.setItem("com.wordnik.swagger.ui.privateKey", privateKey);
           localStorage.setItem("com.wordnik.swagger.ui.apiKey", apiKey);
           localStorage.setItem("com.wordnik.swagger.ui.baseUrl", baseUrl);
         }
@@ -515,6 +514,14 @@ jQuery(function($) {
     },
 
     submitOperationSigned: function() {
+      var privateKey = jQuery.trim($("#input_privateKey").val());
+      if(privateKey.length == 0){
+          $("#input_privateKey").wiggle();
+          return;
+      } else if (apiSelectionController.supportsLocalStorage()) {
+          localStorage.setItem("com.wordnik.swagger.ui.privateKey", privateKey);
+      }
+
       var form = $(this.elementScope + "_form");
       var error_free = true;
       var missing_input = null;
@@ -539,8 +546,7 @@ jQuery(function($) {
       if (error_free) {
         var formData = form.find("td>input, td>select").serializeArray();
         log(formData);
-        var privateKey = $("#input_privateKey").val();
-        var invocationUrl = this.operation.invocationUrlSigned(formData, jQuery.trim(privateKey));
+        var invocationUrl = this.operation.invocationUrlSigned(formData, privateKey);
         log(this.operation._headers);
         if(invocationUrl){
             var requestData;

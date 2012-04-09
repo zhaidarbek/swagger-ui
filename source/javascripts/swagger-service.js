@@ -246,10 +246,6 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
     },
 
     invocationUrlSigned: function(formValues, key) {
-      if (!key) {
-        alert("Please specify signing key");
-        return null;
-      }
       var url = this.invocationUrl(formValues);
 
       // sign URL

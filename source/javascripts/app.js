@@ -8,3 +8,6 @@
 //= require "doc"
 //= require "underscore-min"
 //= require "spine"
+//= require "sha1"
+//= require "form2js"
+
