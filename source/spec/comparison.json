@@ -1,0 +1,181 @@
+{
+  "basePath": "https://dev-api.groupdocs.com/v2.0/",
+  "swaggerVersion": "1.1-SHAPSHOT.121026",
+  "apiVersion": "0.1",
+  "apis": [
+    {
+      "path": "comparison/{userId}/comparison/redline?source={sourceFileId}&target={targetFileId}",
+      "operations": [
+        {
+          "nickname": "GetRedlineView",
+          "summary": "Get redline view",
+          "responseClass": "RedlineViewResponse",
+          "httpMethod": "GET",
+          "parameters": [
+            {
+              "name": "targetFileId",
+              "description": "Target File GUID",
+              "dataType": "string",
+              "required": true,
+              "paramType": "path"
+            },
+            {
+              "name": "sourceFileId",
+              "description": "Source File GUID",
+              "dataType": "string",
+              "required": true,
+              "paramType": "path"
+            },
+            {
+              "name": "userId",
+              "description": "User GUID",
+              "dataType": "string",
+              "required": true,
+              "paramType": "path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "comparison/{userId}/comparison/document?guid={guid}",
+      "operations": [
+        {
+          "nickname": "GetDocumentDetails",
+          "summary": "Get document details",
+          "responseClass": "DocumentDetailsResponse",
+          "httpMethod": "GET",
+          "parameters": [
+            {
+              "name": "userId",
+              "description": "User GUID",
+              "dataType": "string",
+              "required": true,
+              "paramType": "path"
+            },
+            {
+              "name": "guid",
+              "description": "Document GUID",
+              "dataType": "string",
+              "required": true,
+              "paramType": "path"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "models": {
+    "Page": {
+      "id": "Page",
+      "properties": {
+          "Id": {
+            "type": "int"
+          },
+          "Width": {
+            "type": "double"
+          },
+          "Height": {
+            "type": "double"
+          }
+        }
+    },
+    "Rectangle": {
+      "id": "Rectangle",
+      "properties": {
+          "X": {
+            "type": "double"
+          },
+          "Y": {
+            "type": "double"
+          },
+          "Width": {
+            "type": "double"
+          },
+          "Height": {
+            "type": "double"
+          }
+        }
+    },
+    "RedlineChangeInfo": {
+      "id": "RedlineChangeInfo",
+      "properties": {
+          "Id": {
+            "type": "double"
+          },
+          "Type": {
+            "type": "string"
+          },
+          "Page": {
+            "type": "Page"
+          },
+          "Box": {
+            "type": "Rectangle"
+          },
+          "Text": {
+            "type": "string"
+          }
+        }
+    },
+    "RedlineViewResult": {
+      "id": "RedlineViewResult",
+      "properties": {
+          "RedlineFileId": {
+            "type": "string"
+          },
+          "Changes": {
+            "type": "List[RedlineChangeInfo]"
+          }
+        }
+    },
+    "RedlineViewResponse": {
+      "id": "RedlineViewResponse",
+      "properties": {
+          "Code": {
+            "type": "string"
+          },
+          "Result": {
+            "type": "RedlineViewResult"
+          },
+          "Status": {
+            "type": "string"
+          },
+          "ErrorMessage": {
+            "type": "string"
+          }
+        }
+    },
+    "DocumentDetailsResult": {
+      "id": "DocumentDetailsResult",
+      "properties": {
+          "Guid": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Supported": {
+            "type": "boolean"
+          }
+        }
+    },
+    "DocumentDetailsResponse": {
+      "id": "DocumentDetailsResponse",
+      "properties": {
+          "Code": {
+            "type": "string"
+          },
+          "Result": {
+            "type": "DocumentDetailsResult"
+          },
+          "Status": {
+            "type": "string"
+          },
+          "ErrorMessage": {
+            "type": "string"
+          }
+        }
+    }
+  }
+}
+
