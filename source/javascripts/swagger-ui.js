@@ -304,7 +304,7 @@ jQuery(function($) {
               $(param.templateName()).tmpl(tmplArgs).appendTo(operationParamsContainer);
               this.hasComplexType = true;
               var modelDef = this.getModelDef(param.dataType);
-              if(modelDef.container){
+              if(modelDef && modelDef.container){
                   // List[string] or List[ComplexType]
                   this.containerParamName = param.name;
               }
@@ -397,27 +397,24 @@ jQuery(function($) {
               }
           });
       } else if(modelDef.model){
-          for (var propIdx in modelDef.model.properties){
-              var prop = modelDef.model.properties[propIdx];
-              for (var propName in prop){
-                  var propType = prop[propName].type;
-                  var propPath = parentModelDef ? parentModelDef.propPath : "";
-                  if(this.isPrimitiveType(propType)){
-                      var tmplName = "#propTemplate";
-                      var tmplArgs = { name: propName, required: prop[propName].required, dataType: propType,
-                                    path: (propPath ? propPath + "." + propName : propName) };
-                      var constants = prop[propName]['enum'];
-    //                  log(constants);
-                      if(constants){
-                          tmplName += "Select";
-                          tmplArgs.allowableValues = constants;
-                      }
-                      $(tmplName).tmpl(tmplArgs).appendTo(modelHtml);
-                  } else {
-                      modelDef.propName = propName;
-                      modelDef.propPath = propPath ? propPath + "." + propName : propName;
-                      this.generateModelHtml(propType, modelHtml, modelDef);
+          for (var propName in modelDef.model.properties){
+              var prop = modelDef.model.properties[propName];
+              var propPath = parentModelDef ? parentModelDef.propPath : "";
+              if(this.isPrimitiveType(prop.type)){
+                  var tmplName = "#propTemplate";
+                  var tmplArgs = { name: propName, required: prop.required, dataType: prop.type,
+                                path: (propPath ? propPath + "." + propName : propName) };
+                  var constants = prop['enum'];
+//                  log(constants);
+                  if(constants){
+                      tmplName += "Select";
+                      tmplArgs.allowableValues = constants;
                   }
+                  $(tmplName).tmpl(tmplArgs).appendTo(modelHtml);
+              } else {
+                  modelDef.propName = propName;
+                  modelDef.propPath = propPath ? propPath + "." + propName : propName;
+                  this.generateModelHtml(prop.type, modelHtml, modelDef);
               }
           }
       }
