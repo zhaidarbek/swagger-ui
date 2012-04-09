@@ -52,7 +52,6 @@
           %tbody{:id => "${resourceName}_${nickname}_${httpMethod}_params"}
         .sandbox_header{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_header"}
           %input.submit{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_button", :name => "commit", :type => "button", :value => "Try it out!"}
-          %input.submit{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_button_signed", :name => "commit", :type => "button", :value => "Send signed"}
           %a{:href => "#", :id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_hider", :onclick => "$('\#${resourceName}_${nickname}_${httpMethod}_content_sandbox_response').slideUp();$(this).fadeOut(); return false;", :style => "display:none"} Hide Response
           %img{:alt => "Throbber", :id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response_throbber", :src => "http://swagger.wordnik.com/images/throbber.gif", :style => "display:none"}
       .response{:id => "${resourceName}_${nickname}_${httpMethod}_content_sandbox_response", :style => "display:none"}

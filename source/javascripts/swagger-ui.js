@@ -314,8 +314,7 @@ jQuery(function($) {
         }
       }
 
-      $(this.elementScope + "_content_sandbox_response_button").click(this.submitOperation);
-      $(this.elementScope + "_content_sandbox_response_button_signed").click(this.submitOperationSigned);
+      $(this.elementScope + "_content_sandbox_response_button").click(this.submitOperationSigned);
     },
 
     generateModelHtml: function(dataType, parentNode, parentModelDef, rootParamName){
