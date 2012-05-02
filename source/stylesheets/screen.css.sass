@@ -10,6 +10,7 @@ $code_border_color: #E5E0C6
 $form_color: #0F6AB4
 $error_color: #CC0000
 $notice_color: #007F00
+$color_gd_header: #125389
 
 $body_width: 960px
 $main_column_width: 630px
@@ -32,10 +33,10 @@ body
 
   #header
     position: fixed
-    width: 98%
+    width: 100%
     z-index: 1000
-    background-color: $main_color_light
-    padding: 14px
+    background-color: $color_gd_header
+    padding: 0
 
     a#logo
       font-size: 1.5em
@@ -53,7 +54,7 @@ body
         input
           font-size: .9em
           padding: 3px
-          margin: 0
+          margin: 14px
         input#input_baseUrl
           width: 400px
         input#input_apiKey
