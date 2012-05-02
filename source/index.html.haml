@@ -80,6 +80,14 @@
     %td.required{:width => "500"} ${description}
 
 
+= jquery_template :paramTemplateFile do
+  %tr
+    %td.code.required ${name}
+    %td
+      %input.required{:minlength => "0", :name => "${name}", :placeholder => "${dataType}", :type => "file", :value => ""}
+    %td.required{:width => "500"} ${description}
+
+
 = jquery_template :paramTemplateSelect do
   %tr
     %td.code ${name}

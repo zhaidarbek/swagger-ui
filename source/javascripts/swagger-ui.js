@@ -72,7 +72,10 @@ jQuery(function($) {
     },
 
     showApi: function() {
-      var baseUrl = "https://dev-api.groupdocs.com/v2.0/spec";
+      var baseUrl = location.protocol + "//" + location.host + location.pathname;
+      if(location.hostname == "localhost"){
+        baseUrl = "https://dev-api.groupdocs.com/v2.0/spec";
+      }
       var apiKey = "";
       var privateKey = jQuery.trim($("#input_privateKey").val());
       if (baseUrl.length == 0) {
@@ -248,7 +251,7 @@ jQuery(function($) {
 
       if (this.allowableValues && this.allowableValues.valueType == "LIST") {
         n += "Select";
-      } else if(this.paramType == 'body') {
+      } else if(!utils.isPrimitiveType(this.dataType)) {
           n += "Json";
       } else {
         if (this.required) n += "Required";
@@ -293,8 +296,8 @@ jQuery(function($) {
         for (var p = 0; p < this.operation.parameters.count(); p++) {
           var param = Param.init(this.operation.parameters.all()[p]);
 
-          //
-          if(param.paramType == "body" && !this.isPrimitiveType(param.dataType)){
+
+          if(param.paramType == "body" && !utils.isPrimitiveType(param.dataType)){
               var modelHtml = $("<div/>");
               this.generateModelHtml(param.dataType, modelHtml, null, param.name);
               var tmplArgs = {  modelName: param.name,
@@ -307,6 +310,15 @@ jQuery(function($) {
                   // List[string] or List[ComplexType]
                   this.containerParamName = param.name;
               }
+          } else if(param.paramType == "body" && param.dataType == "string"){
+          	  param.cleanup();
+          	  if(param.name == "stream"){
+          	  	log("hardcoded file input for param.name==stream");
+              	$("#paramTemplateFile").tmpl(param).appendTo(operationParamsContainer);
+             } else {
+             	$(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
+             }
+
           } else {
               param.cleanup();
               $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
@@ -318,7 +330,6 @@ jQuery(function($) {
     },
 
     generateModelHtml: function(dataType, parentNode, parentModelDef, rootParamName){
-      log("generateModelHtml for " + dataType);
       var modelDef = this.getModelDef(dataType);
       if(!modelDef) return;
 
@@ -398,7 +409,7 @@ jQuery(function($) {
           for (var propName in modelDef.model.properties){
               var prop = modelDef.model.properties[propName];
               var propPath = parentModelDef ? parentModelDef.propPath : "";
-              if(this.isPrimitiveType(prop.type)){
+              if(utils.isPrimitiveType(prop.type)){
                   var tmplName = "#propTemplate";
                   var tmplArgs = { name: propName, required: prop.required, dataType: prop.type,
                                 path: (propPath ? propPath + "." + propName : propName) };
@@ -426,7 +437,7 @@ jQuery(function($) {
       if(matches){
           modelDef.container = matches[1];
           modelName = matches[2];
-          if(this.isPrimitiveType(modelName)){
+          if(utils.isPrimitiveType(modelName)){
               // List[string]
               modelDef.primitive = modelName;
               return modelDef;
@@ -444,17 +455,6 @@ jQuery(function($) {
           }
       }
       return null;
-    },
-
-    isPrimitiveType: function(dataType){
-        var type = dataType.toLowerCase();
-        if(type == "string" || type == "int" || type == "integer" ||
-            type == "long" || type == "float" || type == "double" ||
-            type == "byte" || type == "boolean" || type == "date"){
-            return true;
-        } else {
-            return false;
-        }
     },
 
     submitOperation: function() {
@@ -544,10 +544,17 @@ jQuery(function($) {
 
       if (error_free) {
         var formData = form.find("td>input, td>select").serializeArray();
-        log(formData);
+        console.log(formData);
         var invocationUrl = this.operation.invocationUrlSigned(formData, privateKey);
-        log(this.operation._headers);
         if(invocationUrl){
+        	var ajaxArgs = {
+                type: this.operation.httpMethod,
+                contentType: "application/json; charset=utf-8",
+                url: invocationUrl,
+                headers: this.operation._headers,
+                dataType: "json",
+                success: this.showResponse
+            };
             var requestData;
             if(this.hasComplexType){
                 var serialized = form2js(form.find("td>fieldset")[0]);
@@ -559,20 +566,25 @@ jQuery(function($) {
                     requestData = JSON.stringify(serialized);
                 }
             } else {
-                requestData = this.operation._queryParams;
+            	var fileInput = $(":file", form)[0];
+            	if(fileInput){
+            		console.log(fileInput);
+            		var fd = new FormData();
+            		fd.append(fileInput.name, fileInput.files[0]);
+            		requestData = fd;
+
+            		ajaxArgs.processData = false;
+            		ajaxArgs.contentType = false;
+            		ajaxArgs.cache = false;
+            	} else {
+            		requestData = this.operation._queryParams;
+            	}
             }
-            log(requestData);
+            ajaxArgs.data = requestData;
+            console.log(requestData);
 
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
-            $.ajax({
-                type: this.operation.httpMethod,
-                contentType: "application/json; charset=utf-8",
-                url: invocationUrl,
-                headers: this.operation._headers,
-                data: requestData,
-                dataType: "json",
-                success: this.showResponse
-            }).complete(this.showCompleteStatus).error(this.showErrorStatus);
+            $.ajax(ajaxArgs).complete(this.showCompleteStatus).error(this.showErrorStatus);
         }
       }
 
@@ -614,6 +626,19 @@ jQuery(function($) {
     }
 
   });
+
+  var utils = {
+    isPrimitiveType: function(dataType){
+        var type = dataType.toLowerCase();
+        if(type == "string" || type == "int" || type == "integer" ||
+            type == "long" || type == "float" || type == "double" ||
+            type == "byte" || type == "boolean" || type == "date"){
+            return true;
+        } else {
+            return false;
+        }
+    }
+  };
 
   // Attach controller to window*
   window.apiSelectionController = ApiSelectionController.init();
