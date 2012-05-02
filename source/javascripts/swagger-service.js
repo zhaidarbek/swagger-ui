@@ -211,7 +211,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
         formValuesMap[formValue.name] = formValue.value;
       }
 
-      var urlTemplateText = this.path_json.split("{").join("${");
+      var urlTemplateText = this.path_json.split("{").join("${").replace("*", "");
       // log("url template = " + urlTemplateText);
       var urlTemplate = $.template(null, urlTemplateText);
       var url = $.tmpl(urlTemplate, formValuesMap)[0].data;
