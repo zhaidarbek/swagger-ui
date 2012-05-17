@@ -3,6 +3,7 @@ wordnik*.zip
 *.iml
 *.iws
 dist/
+build/
 lib/*.jar
 META-INF/
 web/
@@ -16,3 +17,4 @@ lib/*.pom
 version.properties
 reports/*
 .sass-cache
+
