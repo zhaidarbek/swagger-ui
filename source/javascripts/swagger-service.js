@@ -211,7 +211,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
         formValuesMap[formValue.name] = formValue.value;
       }
 
-      var urlTemplateText = this.path_json.split("{").join("${").replace("*", "");
+      var urlTemplateText = this.path_json.replace(/\*/g, "").split("{").join("${");
       // log("url template = " + urlTemplateText);
       var urlTemplate = $.template(null, urlTemplateText);
       var url = $.tmpl(urlTemplate, formValuesMap)[0].data;
@@ -239,7 +239,12 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       this._queryParams = queryParams;
       this._headers = headers;
 
-      url = this.baseUrl + url;
+      var baseUrl = location.protocol + "//" + location.host + "/v2.0";
+      if(location.hostname == "localhost" && location.port == 4567){
+        baseUrl = "https://dev-api.groupdocs.com/v2.0";
+      }
+
+      url = baseUrl + url;
       // log("final url with query params and base url = " + url);
 
       return url;
@@ -247,15 +252,16 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 
     invocationUrlSigned: function(formValues, key) {
       var url = this.invocationUrl(formValues);
+      console.log(url);
 
       // sign URL
       var urlParts = this.splitUrl(url);
-      // log(urlParts.pathAndQuery);
-      var sha = new jsSHA(urlParts.pathAndQuery, "ASCII");
+      var pathAndQuery = urlParts.pathAndQuery.replace(/\s/g, '%20');
+      var sha = new jsSHA(pathAndQuery, "ASCII");
       var hash = sha.getHMAC(key, "ASCII", "B64");
       var signature = encodeURIComponent(hash);
-      // log(signature);
-      return url +
+
+      return url + 
             (urlParts.query == null || urlParts.query.length == 0 ? '?' : '&') +
             "signature=" + signature;
     },
@@ -461,10 +467,17 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 	      $.getJSON(url + apiKeySuffix, function(response) {
 	      })
 	      .success(function(response) {
-		      log("Setting globalBasePath to " + response.basePath);
-		      globalBasePath = response.basePath;
+			  var baseUrl = location.protocol + "//" + location.host + location.pathname;
+		      if(location.hostname == "localhost" && location.port == 4567){
+		        baseUrl = response.basePath;
+		      }
+		      if(baseUrl.substr(baseUrl.length - 1) === "/"){
+		      	baseUrl = baseUrl.substr(0, baseUrl.length - 1)
+		      }
+  		      log("Setting globalBasePath to " + baseUrl);
+		      globalBasePath = baseUrl;
 		      ApiResource.createAll(response.apis);
-	          controller.fetchResources(response.basePath);
+	          controller.fetchResources(globalBasePath);
 	      })
 	   	  .error(function(response) {
 	          controller.fetchEndpointsSeq();

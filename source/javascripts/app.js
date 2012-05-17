@@ -10,4 +10,5 @@
 //= require "spine"
 //= require "sha1"
 //= require "form2js"
-
+//= require "jquery.fileupload.js"
+//= require "jquery.iframe-transport.js"

@@ -73,7 +73,7 @@ jQuery(function($) {
 
     showApi: function() {
       var baseUrl = location.protocol + "//" + location.host + location.pathname;
-      if(location.hostname == "localhost"){
+      if(location.hostname == "localhost" && location.port == 4567){
         baseUrl = "https://dev-api.groupdocs.com/v2.0/spec";
       }
       var apiKey = "";
@@ -568,14 +568,37 @@ jQuery(function($) {
             } else {
             	var fileInput = $(":file", form)[0];
             	if(fileInput){
-            		console.log(fileInput);
-            		var fd = new FormData();
-            		fd.append(fileInput.name, fileInput.files[0]);
-            		requestData = fd;
+            		console.log(invocationUrl);
+            		// var fd = new FormData();
+            		// fd.append(fileInput.name, fileInput.files[0]);
+            		// requestData = fd;
+// 
+            		// ajaxArgs.processData = false;
+            		// ajaxArgs.contentType = false;
+            		// ajaxArgs.cache = false;
 
-            		ajaxArgs.processData = false;
-            		ajaxArgs.contentType = false;
-            		ajaxArgs.cache = false;
+            		form.fileupload({
+					    url: invocationUrl,
+					    // forceIframeTransport: true,
+					    multipart: false
+					});
+					
+					var args = {};
+					if(fileInput.files !== undefined){
+						log("browser supports File API");
+						args.files = fileInput.files;
+					} else {
+						log("we are in dark ages, using iframe hack which is always multipart");
+						args.files = [{name: "stream"}];
+						args.fileInput = form;
+					}
+					
+					form.fileupload('send', args).complete(this.showCompleteStatus).error(this.showErrorStatus);
+					return;
+					
+					// form.fileupload('disable');
+					// form.fileupload('enable');
+            		
             	} else {
             		requestData = this.operation._queryParams;
             	}
