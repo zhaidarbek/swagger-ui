@@ -156,6 +156,23 @@ jQuery(function($) {
       $("#resources_container").slideDown(function() {
         setTimeout(function() {
           Docs.shebang();
+          if (apiSelectionController.supportsLocalStorage()){
+	          var userIdEls = $("input[name='userId']", "#resources_container");
+	          userIdEls.each(function(){
+	          	var userIdEl = $(this);
+	          	var userIdStored = localStorage.getItem("com.groupdocs.swagger.ui.userId");
+	          	if (userIdStored){
+	          		userIdEl.val(userIdStored);
+	          	}
+	          	userIdEl.change(function(){
+	          		var userIdNew = userIdEl.val();
+	          		localStorage.setItem("com.groupdocs.swagger.ui.userId", userIdNew);
+	          		userIdEls.each(function(){
+	          			$(this).val(userIdNew);
+	          		});
+	          	});
+	          });
+	      }
         },
         400);
       });
@@ -265,7 +282,7 @@ jQuery(function($) {
 
 
   var OperationController = Spine.Controller.create({
-    proxied: ["submitOperation", "submitOperationSigned", "showResponse", "showErrorStatus", "showCompleteStatus"],
+    proxied: ["submitOperationSigned", "showResponse", "showErrorStatus", "showCompleteStatus"],
 
     operation: null,
     templateName: "#operationTemplate",
@@ -457,61 +474,6 @@ jQuery(function($) {
       return null;
     },
 
-    submitOperation: function() {
-      var form = $(this.elementScope + "_form");
-      var error_free = true;
-      var missing_input = null;
-
-      // Cycle through the form's required inputs
-      form.find("input.required").each(function() {
-
-        // Remove any existing error styles from the input
-        $(this).removeClass('error');
-
-        // Tack the error style on if the input is empty..
-        if ($(this).val() == '') {
-          if (missing_input == null)
-          missing_input = $(this);
-          $(this).addClass('error');
-          $(this).wiggle();
-          error_free = false;
-        }
-
-      });
-
-      if (error_free) {
-        var formData = form.find("td>input, td>select").serializeArray();
-        var invocationUrl = this.operation.invocationUrl(formData);
-        if(invocationUrl){
-            var requestData;
-            if(this.hasComplexType){
-                var serialized = form2js(form.find("td>fieldset")[0]);
-                if(this.containerParamName){
-                    // json array
-                    requestData = JSON.stringify(serialized[this.containerParamName]);
-                } else {
-                    // json object
-                    requestData = JSON.stringify(serialized);
-                }
-            } else {
-                requestData = this.operation._queryParams;
-            }
-
-            $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
-            $.ajax({
-                type: this.operation.httpMethod,
-                contentType: "application/json; charset=utf-8",
-                url: invocationUrl,
-                headers: this.operation._headers,
-                data: requestData,
-                dataType: "json",
-                success: this.showResponse
-            }).complete(this.showCompleteStatus).error(this.showErrorStatus);
-        }
-      }
-
-    },
-
     submitOperationSigned: function() {
       var privateKey = jQuery.trim($("#input_privateKey").val());
       if(privateKey.length == 0){
@@ -638,7 +600,11 @@ jQuery(function($) {
       // log(data.getAllResponseHeaders());
       var responseText;
       if(data.responseText){
-         responseText = JSON.parse(data.responseText);
+      	 if(data.getResponseHeader("Content-Type") == "application/xml"){
+      	 	responseText = this.htmlEntities(data.responseText);
+      	 } else {
+      	 	responseText = JSON.parse(data.responseText);
+      	 }
       } else {
         responseText = "";
       }
@@ -646,7 +612,11 @@ jQuery(function($) {
       $(".response_code", this.elementScope + "_content_sandbox_response").html("<pre>" + data.status + "</pre>");
       $(".response_body", this.elementScope + "_content_sandbox_response").html(response_body);
       $(".response_headers", this.elementScope + "_content_sandbox_response").html("<pre>" + data.getAllResponseHeaders() + "</pre>");
-    }
+    },
+    
+    htmlEntities: function(str) {
+	    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+	}
 
   });
 

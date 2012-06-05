@@ -256,7 +256,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 
       // sign URL
       var urlParts = this.splitUrl(url);
-      var pathAndQuery = urlParts.pathAndQuery.replace(/\s/g, '%20');
+      var pathAndQuery = encodeURI(urlParts.pathAndQuery);
       var sha = new jsSHA(pathAndQuery, "ASCII");
       var hash = sha.getHMAC(key, "ASCII", "B64");
       var signature = encodeURIComponent(hash);
