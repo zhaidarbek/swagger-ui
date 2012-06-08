@@ -18,13 +18,14 @@
   %body
 
     #header
-      %img{:alt => "Logo", :src => "stylesheets/logo.png", :style => "border: 0 none; margin-left: 15px;"}
+      %img{:alt => "Logo", :src => "stylesheets/logo.png", :style => "border: 0 none; margin-left: 30px; margin-top: 10px;"}
 
       %form#api_selector
         .input
           %span{:style => "font-family: GochiHandRegular; color: #FFFFFF; "}
-            Please Enter Your Private Key &ndash;&gt;
-          = text_field_tag :privateKey, :placeholder => "private_key", :id => 'input_privateKey'
+            Please Enter Your Client and Signing Keys &ndash;&gt;
+          = text_field_tag :clientKey, :placeholder => "client_key", :id => 'input_clientKey'
+          = text_field_tag :privateKey, :placeholder => "signing_key", :id => 'input_privateKey'
 
     = yield
 

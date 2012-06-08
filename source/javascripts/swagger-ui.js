@@ -12,9 +12,13 @@ jQuery(function($) {
 
       if (this.supportsLocalStorage()) {
         var privateKey = localStorage.getItem("com.wordnik.swagger.ui.privateKey");
+        var clientKey = localStorage.getItem("com.wordnik.swagger.ui.clientKey");
 
         if (privateKey && privateKey.length > 0)
         $("#input_privateKey").val(privateKey);
+
+        if (clientKey && clientKey.length > 0)
+        $("#input_clientKey").val(clientKey);
 
       } else {
         log("localStorage not supported, user will need to specifiy the api url");
@@ -74,16 +78,17 @@ jQuery(function($) {
     showApi: function() {
       var baseUrl = location.protocol + "//" + location.host + location.pathname;
       if(location.hostname == "localhost" && location.port == 4567){
-        baseUrl = "https://dev-api.groupdocs.com/v2.0/spec";
+        baseUrl = "https://stage-api.dynabic.com/Billing/spec";
       }
       var apiKey = "";
       var privateKey = jQuery.trim($("#input_privateKey").val());
+      var clientKey = jQuery.trim($("#input_clientKey").val());
       if (baseUrl.length == 0) {
         $("#input_baseUrl").wiggle();
       } else {
         if (this.supportsLocalStorage()) {
           localStorage.setItem("com.wordnik.swagger.ui.privateKey", privateKey);
-          localStorage.setItem("com.wordnik.swagger.ui.apiKey", apiKey);
+          localStorage.setItem("com.wordnik.swagger.ui.clientKey", clientKey);
           localStorage.setItem("com.wordnik.swagger.ui.baseUrl", baseUrl);
         }
         var resourceListController = ResourceListController.init({
@@ -476,11 +481,18 @@ jQuery(function($) {
 
     submitOperationSigned: function() {
       var privateKey = jQuery.trim($("#input_privateKey").val());
+      var clientKey = jQuery.trim($("#input_clientKey").val());
       if(privateKey.length == 0){
           $("#input_privateKey").wiggle();
           return;
       } else if (apiSelectionController.supportsLocalStorage()) {
           localStorage.setItem("com.wordnik.swagger.ui.privateKey", privateKey);
+      }
+      if(clientKey.length == 0){
+          $("#input_clientKey").wiggle();
+          return;
+      } else if (apiSelectionController.supportsLocalStorage()) {
+          localStorage.setItem("com.wordnik.swagger.ui.clientKey", clientKey);
       }
 
       var form = $(this.elementScope + "_form");
@@ -507,7 +519,7 @@ jQuery(function($) {
       if (error_free) {
         var formData = form.find("td>input, td>select").serializeArray();
         console.log(formData);
-        var invocationUrl = this.operation.invocationUrlSigned(formData, privateKey);
+        var invocationUrl = this.operation.invocationUrlSigned(formData, clientKey, privateKey);
         if(invocationUrl){
         	var ajaxArgs = {
                 type: this.operation.httpMethod,
@@ -527,6 +539,12 @@ jQuery(function($) {
                     // json object
                     requestData = JSON.stringify(serialized);
                 }
+                
+                // if(this.operation.httpMethodLowercase == "put" || this.operation.httpMethodLowercase == "post")
+                var signature = this.operation.signString(requestData, privateKey);
+                ajaxArgs.headers["signature"] = signature;
+                ajaxArgs.headers["clientkey"] = clientKey;
+                
             } else {
             	var fileInput = $(":file", form)[0];
             	if(fileInput){

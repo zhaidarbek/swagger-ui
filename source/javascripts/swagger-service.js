@@ -239,9 +239,9 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       this._queryParams = queryParams;
       this._headers = headers;
 
-      var baseUrl = location.protocol + "//" + location.host + "/v2.0";
+      var baseUrl = location.protocol + "//" + location.host + "/Billing";
       if(location.hostname == "localhost" && location.port == 4567){
-        baseUrl = "https://dev-api.groupdocs.com/v2.0";
+        baseUrl = "https://stage-api.dynabic.com/Billing";
       }
 
       url = baseUrl + url;
@@ -250,20 +250,26 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       return url;
     },
 
-    invocationUrlSigned: function(formValues, key) {
+    invocationUrlSigned: function(formValues, clientKey, privateKey) {
       var url = this.invocationUrl(formValues);
+      var urlParts = this.splitUrl(url);
+      url = url + (urlParts.query == null || urlParts.query.length == 0 ? '?' : '&') +
+            "clientkey=" + clientKey;
       console.log(url);
 
       // sign URL
-      var urlParts = this.splitUrl(url);
-      var pathAndQuery = encodeURI(urlParts.pathAndQuery);
-      var sha = new jsSHA(pathAndQuery, "ASCII");
-      var hash = sha.getHMAC(key, "ASCII", "B64");
-      var signature = encodeURIComponent(hash);
-
-      return url + 
-            (urlParts.query == null || urlParts.query.length == 0 ? '?' : '&') +
-            "signature=" + signature;
+      var signature = this.signString(url, privateKey);
+      return url + "&signature=" + signature;
+    },
+    
+    signString: function (content, privateKey) {
+		var sha = new jsSHA(content.toLowerCase(), "ASCII");
+		var hash = sha.getHMAC(privateKey, "ASCII", "B64");
+		var signature = hash.replace(/\+/g, "-").replace(/\//g, "_");
+		if(signature.substr(-1) === "="){
+		   signature = signature.substr(0, signature.length-1);
+		}
+		return signature;
     },
 
     splitUrl: (function () {
