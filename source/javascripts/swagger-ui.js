@@ -618,22 +618,53 @@ jQuery(function($) {
       // log(data.getAllResponseHeaders());
       var responseText;
       if(data.responseText){
-      	 if(data.getResponseHeader("Content-Type") == "application/xml"){
-      	 	responseText = this.htmlEntities(data.responseText);
+      	 if(data.getResponseHeader("Content-Type").indexOf("application/xml") != -1){
+      	 	responseText = this.htmlEscape(this.formatXml(data.responseText));
       	 } else {
-      	 	responseText = JSON.parse(data.responseText);
+      	 	responseText = JSON.stringify(JSON.parse(data.responseText), null, 2).replace(/\n/g, "<br>");
       	 }
       } else {
         responseText = "";
       }
-      var response_body = "<pre>" + JSON.stringify(responseText, null, 2).replace(/\n/g, "<br>") + "</pre>";
+      var response_body = "<pre>" + responseText + "</pre>";
       $(".response_code", this.elementScope + "_content_sandbox_response").html("<pre>" + data.status + "</pre>");
       $(".response_body", this.elementScope + "_content_sandbox_response").html(response_body);
       $(".response_headers", this.elementScope + "_content_sandbox_response").html("<pre>" + data.getAllResponseHeaders() + "</pre>");
     },
     
-    htmlEntities: function(str) {
-	    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    formatXml: function(xml) {
+	    var formatted = '';
+	    var reg = /(>)(<)(\/*)/g;
+	    xml = xml.replace(reg, '$1\r\n$2$3');
+	    var pad = 0;
+	    jQuery.each(xml.split('\r\n'), function(index, node) {
+	        var indent = 0;
+	        if (node.match( /.+<\/\w[^>]*>$/ )) {
+	            indent = 0;
+	        } else if (node.match( /^<\/\w/ )) {
+	            if (pad != 0) {
+	                pad -= 1;
+	            }
+	        } else if (node.match( /^<\w[^>]*[^\/]>.*$/ )) {
+	            indent = 1;
+	        } else {
+	            indent = 0;
+	        }
+	
+	        var padding = '';
+	        for (var i = 0; i < pad; i++) {
+	            padding += '  ';
+	        }
+	
+	        formatted += padding + node + '\r\n';
+	        pad += indent;
+	    });
+	
+	    return formatted;
+	},
+
+    htmlEscape: function(str) {
+	    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/ /g, '&nbsp;').replace(/\n/g,'<br />');;
 	}
 
   });
