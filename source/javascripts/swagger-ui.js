@@ -76,10 +76,7 @@ jQuery(function($) {
     },
 
     showApi: function() {
-      var baseUrl = location.protocol + "//" + location.host + location.pathname;
-      if(location.hostname == "localhost" && location.port == 4567){
-        baseUrl = "https://stage-api.dynabic.com/Billing/spec";
-      }
+      var baseUrl = "/";
       var apiKey = "";
       var privateKey = jQuery.trim($("#input_privateKey").val());
       var clientKey = jQuery.trim($("#input_clientKey").val());
@@ -539,12 +536,12 @@ jQuery(function($) {
                     // json object
                     requestData = JSON.stringify(serialized);
                 }
-                
+
                 // if(this.operation.httpMethodLowercase == "put" || this.operation.httpMethodLowercase == "post")
                 var signature = this.operation.signString(requestData, privateKey);
                 ajaxArgs.headers["signature"] = signature;
                 ajaxArgs.headers["clientkey"] = clientKey;
-                
+
             } else {
             	var fileInput = $(":file", form)[0];
             	if(fileInput){
@@ -552,7 +549,7 @@ jQuery(function($) {
             		// var fd = new FormData();
             		// fd.append(fileInput.name, fileInput.files[0]);
             		// requestData = fd;
-// 
+//
             		// ajaxArgs.processData = false;
             		// ajaxArgs.contentType = false;
             		// ajaxArgs.cache = false;
@@ -562,7 +559,7 @@ jQuery(function($) {
 					    // forceIframeTransport: true,
 					    multipart: false
 					});
-					
+
 					var args = {};
 					if(fileInput.files !== undefined){
 						log("browser supports File API");
@@ -572,13 +569,13 @@ jQuery(function($) {
 						args.files = [{name: "stream"}];
 						args.fileInput = form;
 					}
-					
+
 					form.fileupload('send', args).complete(this.showCompleteStatus).error(this.showErrorStatus);
 					return;
-					
+
 					// form.fileupload('disable');
 					// form.fileupload('enable');
-            		
+
             	} else {
             		requestData = this.operation._queryParams;
             	}
@@ -631,7 +628,7 @@ jQuery(function($) {
       $(".response_body", this.elementScope + "_content_sandbox_response").html(response_body);
       $(".response_headers", this.elementScope + "_content_sandbox_response").html("<pre>" + data.getAllResponseHeaders() + "</pre>");
     },
-    
+
     formatXml: function(xml) {
 	    var formatted = '';
 	    var reg = /(>)(<)(\/*)/g;
@@ -650,16 +647,16 @@ jQuery(function($) {
 	        } else {
 	            indent = 0;
 	        }
-	
+
 	        var padding = '';
 	        for (var i = 0; i < pad; i++) {
 	            padding += '  ';
 	        }
-	
+
 	        formatted += padding + node + '\r\n';
 	        pad += indent;
 	    });
-	
+
 	    return formatted;
 	},
 

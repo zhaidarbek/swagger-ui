@@ -7,10 +7,6 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
   if (discoveryUrl.length == 0)
   throw new Error("discoveryUrl must be passed while creating SwaggerService");
 
-  if (! (discoveryUrl.toLowerCase().indexOf("http:") == 0 || discoveryUrl.toLowerCase().indexOf("https:") == 0)) {
-    discoveryUrl = ("http://" + discoveryUrl);
-  }
-
   var globalBasePath = null;
   var formatString = ".{format}";
   var statusListener = statusCallback;
@@ -75,7 +71,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
     },
 
     addApis: function(apiObjects, basePath) {
-      // log("apiObjects: %o", apiObjects);
+      log("apiObjects: %o", basePath);
       this.apiList.createAll(apiObjects);
 	  this.apiList.each(function(api) {
 		api.setBaseUrl(basePath);
@@ -239,12 +235,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       this._queryParams = queryParams;
       this._headers = headers;
 
-      var baseUrl = location.protocol + "//" + location.host + "/Billing";
-      if(location.hostname == "localhost" && location.port == 4567){
-        baseUrl = "https://stage-api.dynabic.com/Billing";
-      }
-
-      url = baseUrl + url;
+      url = this.baseUrl + url;
       // log("final url with query params and base url = " + url);
 
       return url;
@@ -261,7 +252,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       var signature = this.signString(url, privateKey);
       return url + "&signature=" + signature;
     },
-    
+
     signString: function (content, privateKey) {
 		var sha = new jsSHA(content.toLowerCase(), "ASCII");
 		var hash = sha.getHMAC(privateKey, "ASCII", "B64");
@@ -451,8 +442,6 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 	  else if(endsWith(baseDiscoveryUrl, "/resources"))
 		baseDiscoveryUrl = baseDiscoveryUrl.substr(0, baseDiscoveryUrl.length - "/resources".length);
 
-	  this.discoveryUrlList.push(discoveryUrl);
-	  this.discoveryUrlList.push(baseDiscoveryUrl);
 	  this.discoveryUrlList.push(baseDiscoveryUrl + "/resources.json");
 	  this.discoveryUrlList.push(baseDiscoveryUrl + "/resources");
 
@@ -473,10 +462,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 	      $.getJSON(url + apiKeySuffix, function(response) {
 	      })
 	      .success(function(response) {
-			  var baseUrl = location.protocol + "//" + location.host + location.pathname;
-		      if(location.hostname == "localhost" && location.port == 4567){
-		        baseUrl = response.basePath;
-		      }
+			  var baseUrl = response.basePath;
 		      if(baseUrl.substr(baseUrl.length - 1) === "/"){
 		      	baseUrl = baseUrl.substr(0, baseUrl.length - 1)
 		      }
