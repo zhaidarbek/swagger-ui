@@ -593,6 +593,7 @@ jQuery(function($) {
     showCompleteStatus: function(data) {
       // log("complete " + data.status);
       this.showStatus(data);
+      $(this.elementScope + "_content_sandbox_response").slideDown();
     },
 
     showStatus: function(data) {
