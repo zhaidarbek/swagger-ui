@@ -203,8 +203,12 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       var formValuesMap = new Object();
       for (var i = 0; i < formValues.length; i++) {
         var formValue = formValues[i];
-        if (formValue.value && jQuery.trim(formValue.value).length > 0)
-        formValuesMap[formValue.name] = formValue.value;
+        if (formValue.value && jQuery.trim(formValue.value).length > 0) {
+            if(formValuesMap[formValue.name])
+                formValuesMap[formValue.name] = formValuesMap[formValue.name] + "|" + formValue.value;
+            else
+                formValuesMap[formValue.name] = formValue.value;
+        }
       }
 
       var urlTemplateText = this.path_json.replace(/\*/g, "").split("{").join("${");
