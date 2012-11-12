@@ -440,7 +440,19 @@ jQuery(function($) {
               } else {
                   modelDef.propName = propName;
                   modelDef.propPath = propPath ? propPath + "." + propName : propName;
-                  this.generateModelHtml(prop.type, modelHtml, modelDef);
+
+              	  var type;
+              	  if (prop.type === "List") {
+              	  	  if(prop.items.$ref){
+	              	  	  type = "List[" + prop.items.$ref + "]";
+	              	  } else {
+	              	  	  type = "List[" + prop.items.type + "]";
+	              	  }
+	              } else {
+	              	  type = prop.type;
+	              }
+	              console.log("nested type: " + type);
+	              this.generateModelHtml(type, modelHtml, modelDef);
               }
           }
       }
