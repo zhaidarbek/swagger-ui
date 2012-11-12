@@ -7,9 +7,9 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
   if (discoveryUrl.length == 0)
   throw new Error("discoveryUrl must be passed while creating SwaggerService");
 
-  if (! (discoveryUrl.toLowerCase().indexOf("http:") == 0 || discoveryUrl.toLowerCase().indexOf("https:") == 0)) {
-    discoveryUrl = ("http://" + discoveryUrl);
-  }
+  // if (! (discoveryUrl.toLowerCase().indexOf("http:") == 0 || discoveryUrl.toLowerCase().indexOf("https:") == 0)) {
+    // discoveryUrl = ("http://" + discoveryUrl);
+  // }
 
   var globalBasePath = null;
   var formatString = ".{format}";
@@ -239,12 +239,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       this._queryParams = queryParams;
       this._headers = headers;
 
-      var baseUrl = location.protocol + "//" + location.host + "/v2.0";
-      if(location.hostname == "localhost" && location.port == 4567){
-        baseUrl = "https://dev-api.groupdocs.com/v2.0";
-      }
-
-      url = baseUrl + url;
+      url = location.protocol + "//" + location.host + window.apiBasePath + url;
       // log("final url with query params and base url = " + url);
 
       return url;
@@ -467,10 +462,7 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 	      $.getJSON(url + apiKeySuffix, function(response) {
 	      })
 	      .success(function(response) {
-			  var baseUrl = location.protocol + "//" + location.host + location.pathname;
-		      if(location.hostname == "localhost" && location.port == 4567){
-		        baseUrl = response.basePath;
-		      }
+			  var baseUrl = discoveryUrl;
 		      if(baseUrl.substr(baseUrl.length - 1) === "/"){
 		      	baseUrl = baseUrl.substr(0, baseUrl.length - 1)
 		      }

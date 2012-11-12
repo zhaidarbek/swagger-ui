@@ -3,6 +3,10 @@ jQuery(function($) {
   // this.baseUrl = "http://petstore.swagger.wordnik.com/api/resources.json";
   // this.apiKey = "special-key";
 
+  // window.specsBasePath = location.protocol + "//" + location.host + (location.pathname==="/" ? "" : location.pathname) + "/spec-files";
+  window.specsBasePath = "spec-files";
+  window.apiBasePath = "/v2.0";
+  
   var ApiSelectionController = Spine.Controller.create({
     proxied: ["showApi"],
 
@@ -72,10 +76,7 @@ jQuery(function($) {
     },
 
     showApi: function() {
-      var baseUrl = location.protocol + "//" + location.host + location.pathname;
-      if(location.hostname == "localhost" && location.port == 4567){
-        baseUrl = "https://dev-api.groupdocs.com/v2.0/spec";
-      }
+      var baseUrl = window.specsBasePath;
       var apiKey = "";
       var privateKey = jQuery.trim($("#input_privateKey").val());
       if (baseUrl.length == 0) {

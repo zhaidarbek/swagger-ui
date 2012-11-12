@@ -4,7 +4,7 @@ wordnik*.zip
 *.iws
 dist/
 build/
-source/v2.0/
+source/spec-files
 lib/*.jar
 META-INF/
 web/
