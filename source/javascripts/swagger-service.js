@@ -247,7 +247,6 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 
     invocationUrlSigned: function(formValues, key) {
       var url = this.invocationUrl(formValues);
-      console.log(url);
 
       // sign URL
       var urlParts = this.splitUrl(url);
@@ -499,7 +498,6 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
       var controller = this;
       updateStatus("Fetching " + apiResource.name + "...");
       var resourceUrl = globalBasePath + apiResource.path_json + apiKeySuffix;
-      log("resourceUrl: %o", resourceUrl);
       $.getJSON(resourceUrl,
       function(response) {
         controller.loadResources(response, apiResource);

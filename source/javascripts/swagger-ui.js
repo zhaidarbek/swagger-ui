@@ -374,12 +374,14 @@ jQuery(function($) {
       modelHtml.appendTo(parentNode);
 
       if(modelDef.container){
-          var arrayItemId = parentModelDef ? parentModelDef.propPath.replace(".", "_").replace("[", "_").replace("]", "_") : rootParamName;
+      	  var itemContext = this.resource.name + "_" + this.operation.nickname + "_";
+          var parentModelDefPropPath = parentModelDef ? parentModelDef.propPath : undefined;
+          var arrayItemId = itemContext + (parentModelDef ? parentModelDefPropPath.replace(/[\.\[\]]/g, "_") : rootParamName);
           $("#modelArrayActionsTemplate").tmpl({itemPath: arrayItemId, propName: (parentModelDef ? parentModelDef.propName : rootParamName )}).appendTo(modelHtml);
 
           var context = this.elementScope + "_params";
-          $(".addArrayItem_" + arrayItemId, context).live('click', {refThis: this}, function(event){
-              log("adding " + arrayItemId);
+      	  $(".addArrayItem_" + arrayItemId, context).live('click', {refThis: this}, function(event){
+              console.log("adding " + arrayItemId + " at path: " + parentModelDefPropPath);
               var refThis = event.data.refThis;
               if(refThis.modelsArrayIndex[arrayItemId] === undefined){
                   refThis.modelsArrayIndex[arrayItemId] = 0;
@@ -388,8 +390,8 @@ jQuery(function($) {
               }
 
               var propPath;
-              if(parentModelDef){
-                  propPath = parentModelDef.propPath;
+              if(parentModelDefPropPath){
+                  propPath = parentModelDefPropPath;
               } else if(rootParamName){
                   propPath = rootParamName;
               }
@@ -452,7 +454,7 @@ jQuery(function($) {
 	              } else {
 	              	  type = prop.type;
 	              }
-	              console.log("nested type: " + type);
+	              // console.log("nested type: " + type);
 	              this.generateModelHtml(type, modelHtml, modelDef);
               }
           }
@@ -563,9 +565,11 @@ jQuery(function($) {
 						log("browser supports File API");
 						args.files = fileInput.files;
 					} else {
-						log("we are in dark ages, using iframe hack which is always multipart");
-						args.files = [{name: "stream"}];
-						args.fileInput = form;
+						alert("File upload is not possible on your browser. Please use a modern browser with HTML5 support.");
+						// commented below because GroupDocs StorageApi doesn't support multipart uploads
+						// log("we are in dark ages, using iframe hack which is always multipart");
+						// args.files = [{name: "stream"}];
+						// args.fileInput = form;
 					}
 					
 					form.fileupload('send', args).complete(this.showCompleteStatus).error(this.showErrorStatus);
