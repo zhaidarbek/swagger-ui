@@ -179,8 +179,6 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
 
       this.httpMethodLowercase = this.httpMethod.toLowerCase();
 
-      this._queryParams = {};
-
       this._headers = {};
 
       var value = this.parameters;
@@ -210,19 +208,19 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
         if (formValue.value && jQuery.trim(formValue.value).length > 0)
         formValuesMap[formValue.name] = formValue.value;
       }
-
-      var urlTemplateText = this.path_json.replace(/\*/g, "").split("{").join("${");
-      // log("url template = " + urlTemplateText);
+	  var apiPath = this.path_json.replace(/\*/g, "");
+	  var idx = apiPath.indexOf("?");
+	  if(idx > 0){
+	  	apiPath = apiPath.substr(0, idx);
+	  }
+	  
+      var urlTemplateText = apiPath.split("{").join("${");
+      log("url template = " + urlTemplateText);
       var urlTemplate = $.template(null, urlTemplateText);
       var url = $.tmpl(urlTemplate, formValuesMap)[0].data;
-      // log("url with path params = " + url);
+      log("url with path params = " + url);
       var headers = {};
       var queryParams = {};
-      if (apiKey) {
-        apiKey = jQuery.trim(apiKey);
-        if (apiKey.length > 0)
-        queryParams['api_key'] = apiKey;
-      }
 
       this.parameters.each(function(param) {
         var paramValue = jQuery.trim(formValuesMap[param.name]);
@@ -230,17 +228,20 @@ function SwaggerService(discoveryUrl, _apiKey, statusCallback) {
             queryParams[param.name] = formValuesMap[param.name];
         } else if (param.paramType == "body" && paramValue.length > 0) {
             // according to spec One and only one input object is supplied
-            queryParams = formValuesMap[param.name];
+            // queryParams = formValuesMap[param.name];
         } else if (param.paramType == "header") {
             headers[param.name] = formValuesMap[param.name];
         }
       });
 
-      this._queryParams = queryParams;
+      var _queryParams = jQuery.param(queryParams);
+      if(_queryParams){
+      	_queryParams = "?" + _queryParams;
+      }
       this._headers = headers;
 
-      url = location.protocol + "//" + location.host + window.apiBasePath + url;
-      // log("final url with query params and base url = " + url);
+      url = location.protocol + "//" + location.host + window.apiBasePath + url + _queryParams;
+      log("final url with query params and base url = " + url);
 
       return url;
     },

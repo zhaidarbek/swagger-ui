@@ -576,11 +576,10 @@ jQuery(function($) {
             		
             	} else {
             		ajaxArgs.contentType = "text/html; charset=utf-8";
-            		requestData = this.operation._queryParams;
+            		requestData = undefined;
             	}
             }
             ajaxArgs.data = requestData;
-            console.log(requestData);
 
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
             if(this.operation.responseClass === "stream"){
