@@ -315,28 +315,25 @@ jQuery(function($) {
           var param = Param.init(this.operation.parameters.all()[p]);
 
 
-          if(param.paramType == "body" && !utils.isPrimitiveType(param.dataType)){
-              var modelHtml = $("<div/>");
-              this.generateModelHtml(param.dataType, modelHtml, null, param.name);
-              var tmplArgs = {  modelName: param.name,
+          if(param.paramType == "body"){
+          	  if(param.dataType == "stream"){
+          	  	param.cleanup();
+              	$("#paramTemplateFile").tmpl(param).appendTo(operationParamsContainer);
+              	  
+          	  } else if(!utils.isPrimitiveType(param.dataType)){
+	          	var modelHtml = $("<div/>");
+              	this.generateModelHtml(param.dataType, modelHtml, null, param.name);
+              	var tmplArgs = {  modelName: param.name,
                                 modelHtml: modelHtml.html(),
                                 description: param.description};
-              $(param.templateName()).tmpl(tmplArgs).appendTo(operationParamsContainer);
-              this.hasComplexType = true;
-              var modelDef = this.getModelDef(param.dataType);
-              if(modelDef && modelDef.container){
+              	$(param.templateName()).tmpl(tmplArgs).appendTo(operationParamsContainer);
+              	this.hasComplexType = true;
+              	var modelDef = this.getModelDef(param.dataType);
+              	if(modelDef && modelDef.container){
                   // List[string] or List[ComplexType]
                   this.containerParamName = param.name;
+              	}
               }
-          } else if(param.paramType == "body" && param.dataType == "string"){
-          	  param.cleanup();
-          	  if(param.name == "stream"){
-          	  	log("hardcoded file input for param.name==stream");
-              	$("#paramTemplateFile").tmpl(param).appendTo(operationParamsContainer);
-             } else {
-             	$(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
-             }
-
           } else {
               param.cleanup();
               $(param.templateName()).tmpl(param).appendTo(operationParamsContainer);
