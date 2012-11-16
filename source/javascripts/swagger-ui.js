@@ -526,7 +526,6 @@ jQuery(function($) {
         if(invocationUrl){
         	var ajaxArgs = {
                 type: this.operation.httpMethod,
-                contentType: "application/json; charset=utf-8",
                 url: invocationUrl,
                 headers: this.operation._headers,
                 dataType: "json",
@@ -534,6 +533,7 @@ jQuery(function($) {
             };
             var requestData;
             if(this.hasComplexType){
+            	ajaxArgs.contentType = "application/json; charset=utf-8";
                 var serialized = form2js(form.find("td>fieldset")[0]);
                 if(this.containerParamName){
                     // json array
@@ -566,6 +566,7 @@ jQuery(function($) {
 						args.files = fileInput.files;
 					} else {
 						alert("File upload is not possible on your browser. Please use a modern browser with HTML5 support.");
+						return;
 						// commented below because GroupDocs StorageApi doesn't support multipart uploads
 						// log("we are in dark ages, using iframe hack which is always multipart");
 						// args.files = [{name: "stream"}];
@@ -579,6 +580,7 @@ jQuery(function($) {
 					// form.fileupload('enable');
             		
             	} else {
+            		ajaxArgs.contentType = "text/html; charset=utf-8";
             		requestData = this.operation._queryParams;
             	}
             }
