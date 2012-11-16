@@ -525,8 +525,7 @@ jQuery(function($) {
                 type: this.operation.httpMethod,
                 url: invocationUrl,
                 headers: this.operation._headers,
-                dataType: "json",
-                success: this.showResponse
+                dataType: "json"
             };
             var requestData;
             if(this.hasComplexType){
@@ -542,7 +541,6 @@ jQuery(function($) {
             } else {
             	var fileInput = $(":file", form)[0];
             	if(fileInput){
-            		console.log(invocationUrl);
             		// var fd = new FormData();
             		// fd.append(fileInput.name, fileInput.files[0]);
             		// requestData = fd;
@@ -585,7 +583,13 @@ jQuery(function($) {
             console.log(requestData);
 
             $(".request_url", this.elementScope + "_content_sandbox_response").html("<pre>" + invocationUrl + "</pre>");
-            $.ajax(ajaxArgs).complete(this.showCompleteStatus).error(this.showErrorStatus);
+            if(this.operation.responseClass === "stream"){
+            	var data = {status: "", getAllResponseHeaders: function(){return ""}};
+            	this.showCompleteStatus(data);
+            	window.open(ajaxArgs.url);
+            } else {
+            	$.ajax(ajaxArgs).complete(this.showCompleteStatus).error(this.showErrorStatus);
+            }
         }
       }
 
